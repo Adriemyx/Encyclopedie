@@ -1,0 +1,174 @@
+https://www.digitalocean.com/community/tutorials/how-to-install-postgresql-on-ubuntu-20-04-quickstart
+
+https://supaerodatascience.github.io/DE/0_3_postgres.html
+
+
+psql -d db-mexico86
+
+
+
+
+Réponses TP:
+1.
+-- 1.2
+SELECT nom FROM pays
+
+-- 1.3
+SELECT paysl, paysv FROM match
+
+-- 1.4
+SELECT paysl, paysv FROM match
+WHERE date='1986-06-05' 
+
+-- 1.5
+SELECT paysl, paysv FROM match
+WHERE paysl='France' OR paysv='France'
+
+
+-- 1.6
+SELECT 
+CASE
+	WHEN butsl > butsv THEN paysl
+	ELSE paysv
+END
+FROM match
+WHERE type='Finale'
+
+
+2.
+-- 2.2
+SELECT DISTINCT bar FROM Sert
+NATURAL JOIN Aime
+WHERE Aime.buveur='Martin'
+
+-- 2.3
+SELECT buveur FROM Aime
+NATURAL JOIN Frequente
+NATURAL JOIN Sert
+GROUP BY buveur
+HAVING COUNT(buveur) > 1
+
+-- 2.4
+SELECT buveur FROM Aime
+WHERE buveur NOT IN (
+    SELECT buveur FROM Aime
+	NATURAL JOIN Frequente
+	NATURAL JOIN Sert
+)
+
+3.
+-- 3.1
+CREATE VIEW matchbutsglobal AS
+SELECT
+    (buts1 + buts2) AS total_goals,
+    match_type,
+    date
+FROM
+    match;
+
+-- 3.2
+SELECT AVG(buts) as "Moyenne buts" FROM matchbutsglobal
+WHERE paysl='France' OR paysv='France'
+
+-- 3.3
+SELECT  
+	SUM(
+		CASE WHEN paysl = 'France' THEN butsl ELSE 0 END +
+		CASE WHEN paysv = 'France' THEN butsv ELSE 0 END
+	) AS buts
+FROM match
+
+-- 3.4
+SELECT groupe, SUM(buts) as buts FROM matchbutsglobal
+JOIN pays ON matchbutsglobal.paysl = pays.nom
+WHERE matchbutsglobal.type='Poule'
+GROUP BY pays.groupe
+ORDER BY pays.groupe
+
+-- 3.5
+CREATE OR REPLACE FUNCTION vainqueur(pays1 TEXT, pays2 TEXT, match_type TEXT)
+RETURNS TEXT AS $$
+DECLARE
+    paysv TEXT;
+    paysl TEXT;
+    butsv INT;
+    butsl INT;
+BEGIN
+
+    SELECT 
+        m.paysv, 
+        m.paysl,
+        m.butsv, 
+        m.butsl
+    INTO 
+       	paysv, 
+        paysl,
+        butsv, 
+        butsl
+    FROM 
+        match m
+    WHERE 
+        (m.paysv = pays1 AND m.paysl = pays2 AND m.type = match_type) 
+        OR (m.paysv = pays2 AND m.paysl = pays1 AND m.type = match_type)
+    LIMIT 1;
+	
+    IF NOT FOUND THEN
+        RETURN 'Match non trouvé';
+    END IF;
+
+    
+    IF butsv > butsl THEN
+        RETURN paysv; 
+    ELSIF butsl > butsv THEN
+        RETURN paysl;
+    ELSE
+        RETURN 'Match nul';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3.6 
+CREATE TYPE but_stats AS (
+	pays text,
+    total INT,
+    moyenne FLOAT
+);
+
+
+CREATE OR REPLACE FUNCTION butsparequipe(pays TEXT)
+RETURNS but_stats AS $$
+DECLARE
+    total INT;
+	moyenne FLOAT; 
+	match_count INT;
+BEGIN
+    SELECT 
+        SUM(
+            CASE WHEN paysl = pays THEN butsl ELSE 0 END +
+            CASE WHEN paysv = pays THEN butsv ELSE 0 END
+        )
+    INTO 
+        total
+    FROM 
+        match m;
+
+	SELECT 
+		COUNT(*)
+    INTO 
+		match_count
+    FROM 
+        match m
+	WHERE 
+	paysl = pays OR paysv = pays;
+
+	IF match_count > 0 THEN
+        moyenne := total::FLOAT / match_count;
+    ELSE
+        moyenne := 0;
+    END IF;
+		
+    RETURN (pays, total, moyenne);
+END;
+$$ LANGUAGE plpgsql;
+
+--3.7
