@@ -1,0 +1,452 @@
+<h1 align='center'> Machine learning - Régression </h1>
+
+Dans ce document sera présenté quelques bases de code, notamment avec la libraire `scikit-learn`, pour faire de la régression sur python.
+
+## Régression linéaire 
+A utiliser dans le cas d'un problème **supervisé** avec un label **quantitatif** et dont la relation entre la cible et l'entrée (**une variable**) semble être linéaire $y = \alpha \times x + \beta$.
+
+```python
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+
+# Séparation 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Instanciation de sklearn.linear_model.LinearRegression
+lr = LinearRegression()
+
+# Entraînement du modèle de régression linéaire sur les données d'entraînement
+lr.fit(X_train, y_train)
+
+# Prédiction sur les données de test
+y_pred = lr.predict(X_test)
+```
+
+### Métriques de test
+Pour tester de la pertinence de la régression, il faut pouvoir l'éavluer. Pour évaluer les performances d'un modèle de régression linéaire avec `scikit-learn`, il existe plusieurs métriques de test prédéfinies:
+
+1. **MSE (Mean Squared Error)** : C'est la moyenne des carrés des erreurs. Il mesure la dispersion des erreurs.
+
+   ```python
+   from sklearn.metrics import mean_squared_error
+   mse = mean_squared_error(y_true, y_pred)
+   ```
+
+2. **RMSE (Root Mean Squared Error)** : C'est la racine carrée du MSE. Il est dans la même unité que la variable cible, ce qui le rend plus interprétable.
+
+   ```python
+   rmse = mean_squared_error(y_true, y_pred, squared=False)
+   ```
+
+3. **MAE (Mean Absolute Error)** : C'est la moyenne des erreurs absolues. Cela donne une idée de la taille des erreurs en unités de la variable cible.
+
+   ```python
+   from sklearn.metrics import mean_absolute_error
+   mae = mean_absolute_error(y_true, y_pred)
+   ```
+
+4. **R² (Coefficient de détermination)** : Cette métrique indique la proportion de la variance dans la variable cible qui est prédit par le modèle. Elle varie entre 0 et 1, avec des valeurs plus élevées indiquant un meilleur ajustement.
+
+   ```python
+   from sklearn.metrics import r2_score
+   r2 = r2_score(y_true, y_pred)
+   ```
+
+
+
+### Methodes de détection d'*outliers*
+Certains modèles peuvent présenter des métriques assez mauvaises à cause de certaines valeurs abérantes qui induisent le modèle en erreur. Pour détecter ces *"outliers"*, il existe plusieurs méthodes:
+
+
+1. **Boîte à Moustaches (*Boxplot*)**: Un boxplot visualise la distribution des données et identifie les outliers comme des points situés en dehors des moustaches ($1,5$ fois l'intervalle interquartile). Cela permet d'identifier **visuellement** les outliers.
+
+```python
+import matplotlib.pyplot as plt
+
+plt.boxplot(data)
+plt.title('Boxplot des données')
+plt.show()
+```
+
+
+2. **Distance de Cook**: La distance de Cook mesure l'influence d'un point de données sur les coefficients du modèle de régression. Elle évalue l'impact d'une observation sur les valeurs ajustées: Un point avec une distance de Cook supérieure à $1$ ou à $\frac{4}{n}$, où $n$ est le nombre d'observations, peut être considéré comme influent.   
+
+La distance de cook peut se calculer manuellement ou via statsmodels:
+  
+```python
+import statsmodels.api as sm
+
+model = sm.OLS(y, X).fit()
+influence = model.get_influence()
+cooks_d = influence.cooks_distance
+```
+
+
+3. **Résidus Studentisés**: Les résidus studentisés sont des résidus standardisés qui tiennent compte de la variance des résidus, permettant d'identifier les observations atypiques: Des résidus studentisés supérieurs à $3$ ou inférieurs à $-3$ indiquent des points qui s'écartent de la tendance générale.
+
+```python
+studentized_residuals = influence.resid_studentized
+```
+
+
+Il est possible également de faire des tests statistiques.
+
+
+<br>
+<br>
+<br>
+
+## Régression linéaire multiple
+A utiliser dans le cas d'un problème **supervisé** avec un label **quantitatif** et dont la cible semblerait être proche d'une **combinaision linéaire des entrées** (**plusieurs variables**) semble être linéaire $y = \sum_{i} \alpha_{i} \times x + \beta_{0}$.
+
+Le code pour effectuer une régression linéaire multiple est le même que celui pour créer une régression linéaire sauf que maintenant, $\mathcal{X}$ est une matrice où chaque colonne représente une variable indépendante (ou prédicteur), et chaque ligne représente une observation. 
+
+### Sélection des variables
+Toutes les variables à disposition dans $\mathcal{X}$ ne sont pas forcément nécessaire pour la prédiction de la sortie. Il faut alors procéder à la sélection des variables. Il existe plusieurs méthodes:
+
+#### Forward BIC
+La méthode **Forward BIC** (Bayesian Information Criterion) est une technique qui vise à sélectionner un sous-ensemble de variables qui contribue le mieux à la prédiction de la variable cible, tout en minimisant la complexité du modèle. Le BIC est un critère qui pénalise la complexité du modèle (nombre de paramètres) tout en tenant compte de la qualité de l'ajustement. Il aide à éviter le surapprentissage en ajoutant une pénalité plus forte pour les modèles complexes par rapport à d'autres critères comme l'AIC (Akaike Information Criterion).
+
+Voici le code d'implémentation de la méthode forward BIC:
+```python
+import numpy as np
+import statsmodels.api as sm
+
+# Fonction pour calculer le BIC
+def calculate_bic(y_true, y_pred, num_params):
+    residual_sum_of_squares = np.sum((y_true - y_pred) ** 2)
+    n = len(y_true)
+    return n * np.log(residual_sum_of_squares / n) + num_params * np.log(n)
+
+# Fonction de Forward BIC
+def forward_bic(X, y):
+    remaining_features = list(X.columns)
+    selected_features = []
+    best_bic = float('inf')
+
+    while remaining_features:
+        bic_values = []
+        
+        # Essayer d'ajouter chaque variable restante
+        for feature in remaining_features:
+            current_features = selected_features + [feature]
+            X_current = sm.add_constant(X[current_features])
+            model = sm.OLS(y, X_current).fit()
+            bic = calculate_bic(y, model.predict(), len(current_features))
+            bic_values.append(bic)
+        
+        # Trouver la variable qui minimise le BIC
+        best_bic_index = np.argmin(bic_values)
+        best_bic_value = bic_values[best_bic_index]
+        
+        if best_bic_value < best_bic:
+            best_bic = best_bic_value
+            selected_features.append(remaining_features[best_bic_index])
+            remaining_features.remove(remaining_features[best_bic_index])
+        else:
+            break  # Arrêter si le BIC ne s'améliore pas
+
+    return selected_features
+
+# Exécution de la sélection Forward BIC
+selected_features = forward_bic(X, y)
+print(f"Variables sélectionnées: {selected_features}")
+```
+
+
+
+
+#### Backward Elimination
+Cette méthode commence avec un modèle contenant toutes les variables et procède en supprimant progressivement les variables les moins significatives, basées sur des critères comme le p-value ou le BIC. Elle continue jusqu'à ce qu'aucune variable ne puisse être éliminée sans dégrader la performance du modèle.
+
+Voici le code d'implémentation de la méthode backward elimination:
+```python
+import numpy as np
+import statsmodels.api as sm
+
+# Fonction pour calculer le BIC
+def calculate_bic(y_true, y_pred, num_params):
+    residual_sum_of_squares = np.sum((y_true - y_pred) ** 2)
+    n = len(y_true)
+    return n * np.log(residual_sum_of_squares / n) + num_params * np.log(n)
+
+# Fonction de Backward Elimination
+def backward_elimination(X, y):
+    features = list(X.columns)
+    best_bic = float('inf')
+
+    while features:
+        X_current = sm.add_constant(X[features])
+        model = sm.OLS(y, X_current).fit()
+        
+        # Calculer le BIC pour le modèle actuel
+        bic = calculate_bic(y, model.predict(), len(features))
+        
+        # Trouver la variable avec la plus haute p-value
+        p_values = model.pvalues.iloc[1:]  # Ignorer l'interception
+        max_p_value = p_values.max()
+        
+        if max_p_value > 0.05:  # Seuil de signification
+            feature_to_remove = p_values.idxmax()
+            features.remove(feature_to_remove)
+        else:
+            break  # Arrêter si toutes les p-values sont en dessous du seuil
+
+    return features
+
+# Exécution de la sélection Backward Elimination
+selected_features = backward_elimination(X, y)
+print(f"Variables sélectionnées: {selected_features}")
+```
+
+
+<br>
+<br>
+
+### Régression avec régularisation
+### Régression linéaire avec régularisation Lasso
+La régression lasso présente plusieurs intérêts, notamment :
+
+1. **Sélection de variables**: Lasso pénalise les coefficients des variables, ce qui peut conduire à mettre certains d'entre eux à zéro. Cela permet d'identifier et de conserver uniquement les variables les plus pertinentes, simplifiant ainsi le modèle.
+
+2. **Réduction du surapprentissage**: En ajoutant une pénalité sur la complexité du modèle, la régression lasso aide à réduire le risque de surapprentissage, ce qui peut améliorer la capacité de généralisation du modèle sur des données non vues.
+
+3. **Robustesse face à la multicolinéarité**: Lorsque des variables sont corrélées, lasso peut choisir l'une d'elles et ignorer les autres, offrant ainsi une solution stable même en présence de multicolinéarité.
+
+4. **Interprétabilité**: En réduisant le nombre de variables, le modèle devient plus interprétable. Cela facilite l'analyse et la compréhension des relations entre les variables et la variable cible.
+
+5. **Flexibilité**: Lasso peut être utilisé dans de nombreux contextes, qu'il s'agisse de régression linéaire, de classification, ou d'autres types de problèmes de modélisation.
+
+En somme, la régression lasso est un outil puissant pour gérer la complexité des modèles, améliorer leur performance et faciliter l'interprétation des résultats.
+
+Voici le code d'implémentation d'une régression Lasso simple:
+```python
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import train_test_split
+
+# Séparation 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Coefficient de contrôle de l'ampleur de la pénalisation (L1) appliquée aux coefficients de la régression
+# Plus il est élevé, plus la pénalisation est grande
+alpha = 0.5
+
+# Instanciation de sklearn.linear_model.Lasso
+lasso_regressor = Lasso(alpha=alpha)
+
+# Entraînement du modèle de régression Lasso sur les données d'entraînement
+lasso_regressor.fit(X_train, y_train)
+
+# Prédiction sur les données de test
+y_pred_lasso = lasso_regressor.predict(X_test)
+
+# Affichage des coefficients du modèle
+coefficients = pd.Series(lasso_regressor.coef_.flatten(), index=X.columns)
+print("\nCoefficients du modèle Lasso:")
+print(coefficients)
+```
+
+
+### Régression linéaire avec régularisation Ridge
+La régression **Ridge** est idéale pour les situations avec multicolinéarité et quand on veut des coefficients plus stables sans nécessairement réduire le nombre de variables.
+
+1. **Gestion de la multicolinéarité**: Ridge est particulièrement efficace lorsque les variables d'entrée sont fortement corrélées. En ajoutant une pénalité sur la somme des carrés des coefficients (pénalité l2), elle stabilise les estimations et réduit la variance.
+
+2. **Amélioration de la prédiction**: En contraignant les coefficients, Ridge aide à éviter le surapprentissage, ce qui peut améliorer les performances prédictives sur des données non vues, surtout lorsque le modèle est complexe.
+
+3. **Aucune sélection de variables**: Bien que Ridge ne réalise pas de sélection de variables (tous les coefficients restent non nuls), il fournit une estimation plus stable des coefficients, ce qui peut être souhaitable dans certains cas.
+
+
+Voici le code d'implémentation d'une régression Ridge simple:
+```python
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import train_test_split
+
+# Séparation 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Coefficient de contrôle de l'ampleur de la pénalisation (L2) appliquée aux coefficients de la régression
+# Plus il est élevé, plus la pénalisation est grande
+alpha = 0.5
+
+# Instanciation de sklearn.linear_model.Ridge
+ridge_regressor = Ridge(alpha=alpha)
+
+# Entraînement du modèle de régression Ridge sur les données d'entraînement
+ridge_regressor.fit(X_train, y_train)
+
+# Prédiction sur les données de test
+y_pred_ridge = ridge_regressor.predict(X_test)
+
+# Affichage des coefficients du modèle
+coefficients = pd.Series(ridge_regressor.coef_.flatten(), index=X.columns)
+print("\nCoefficients du modèle Ridge:")
+print(coefficients)
+```
+
+
+
+### Régression Elastic Net
+
+La régression **Elastic Net** est préférable quand on a de nombreuses variables corrélées et qu'on souhaite réaliser une sélection de variables tout en gardant une certaine robustesse.
+
+1. **Combinaison des avantages de Lasso et Ridge**: Elastic Net combine les pénalités l1 et l2, ce qui permet à la fois la sélection de variables (comme avec Lasso) et la gestion de la multicolinéarité (comme avec Ridge).
+
+2. **Robustesse en cas de nombreuses variables**: Elastic Net est particulièrement utile lorsque le nombre de variables prédictives est supérieur au nombre d'observations ou en présence de variables corrélées. Il peut sélectionner plusieurs variables corrélées tout en maintenant la stabilité des estimations.
+
+3. **Flexibilité**: En ajustant le paramètre \( l1\_ratio \), tu peux contrôler la balance entre la sélection de variables et la régularisation, permettant une personnalisation selon le problème.
+
+
+Voici le code d'implémentation d'une régression Elastic Net simple:
+```python
+from sklearn.linear_model import ElasticNet
+from sklearn.model_selection import train_test_split
+
+# Séparation 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Coefficient de contrôle de l'ampleur de la pénalisation appliquée aux coefficients de la régression
+# alpha contrôle la force de la pénalisation, l1_ratio contrôle la combinaison entre l1 et l2
+alpha = 0.5
+l1_ratio = 0.5  # 0.5 pour un mélange égal de Lasso et Ridge
+
+# Instanciation de sklearn.linear_model.ElasticNet
+elastic_net_regressor = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
+
+# Entraînement du modèle de régression Elastic Net sur les données d'entraînement
+elastic_net_regressor.fit(X_train, y_train)
+
+# Prédiction sur les données de test
+y_pred_elastic_net = elastic_net_regressor.predict(X_test)
+
+# Affichage des coefficients du modèle
+coefficients = pd.Series(elastic_net_regressor.coef_.flatten(), index=X.columns)
+print("\nCoefficients du modèle ElasticNet:")
+print(coefficients)
+```
+
+
+
+
+### Régression PLS (Partial Least Squares)
+
+La régression PLS est une méthode statistique utilisée principalement pour des situations où **le nombre de variables prédictives est élevé par rapport au nombre d'observations, ou lorsque les variables prédictives sont corrélées**. Voici les principaux intérêts et applications de la régression PLS:
+
+1. **Réduction de la dimensionnalité**: PLS combine la réduction de dimensionnalité et la modélisation prédictive. Elle projette les données dans un espace de dimensions inférieures, facilitant ainsi l'analyse sans perdre trop d'information.
+
+2. **Gestion de la multicolinéarité**: Lorsque les variables prédictives sont corrélées, PLS peut être plus efficace que d'autres méthodes, comme la régression linéaire ordinaire, qui peuvent donner des estimations instables en raison de la multicolinéarité.
+
+3. **Optimisation de la prédiction**: PLS maximise la covariance entre les variables prédictives et la variable cible. Cela permet de construire des modèles prédictifs qui capturent mieux les relations entre les variables.
+
+4. **Adaptabilité**: PLS est flexible et peut être utilisé dans divers contextes, que ce soit pour des données expérimentales, des données spectrales, ou d'autres types de données complexes.
+
+
+Voici le code d'implémentation d'une régression PLS simple:
+```python
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.model_selection import train_test_split
+import pandas as pd
+
+# Séparation 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Instanciation du modèle PLS avec un nombre de composantes latentes
+n_components = 5  # Choisir le nombre de composantes latentes
+pls = PLSRegression(n_components=n_components)
+
+# Entraînement du modèle
+pls.fit(X_train, y_train)
+
+# Prédiction sur les données de test
+y_pred_pls = pls.predict(X_test)
+
+# Affichage des coefficients du modèle
+coefficients = pd.Series(pls.coef_.flatten(), index=X.columns)
+print("\nCoefficients du modèle PLS:")
+print(coefficients)
+```
+
+
+
+
+### Régression Logistique
+
+La régression logistique est une méthode statistique utilisée pour modéliser la relation entre une variable dépendante binaire (ou catégorique) et une ou plusieurs variables indépendantes. Elle est couramment utilisée pour des problèmes de classification où l'objectif est de prédire l'appartenance à l'une des deux catégories.    
+Voici quelques caractéristiques clés de la régression logistique:
+
+1. **Variable dépendante binaire**: La régression logistique est principalement utilisée lorsque la variable cible est binaire (par exemple, succès/échec, oui/non, 0/1).
+
+2. **Fonction logistique**: La régression logistique utilise la fonction logistique (ou sigmoïde) pour modéliser la probabilité que la variable dépendante prenne la valeur 1. La fonction logistique est définie comme :
+   \[
+   P(Y=1|X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_k X_k)}}
+   \]
+   où \( P(Y=1|X) \) est la probabilité que \( Y \) soit égal à 1, \( \beta_0 \) est l'ordonnée à l'origine, et \( \beta_1, \beta_2, \ldots, \beta_k \) sont les coefficients des variables indépendantes.
+
+3. **Estimation des paramètres**: Les coefficients du modèle sont généralement estimés par la méthode de maximum de vraisemblance, qui cherche à maximiser la probabilité d'observer les données données les paramètres du modèle.
+
+4. **Interprétation des coefficients**: Les coefficients dans une régression logistique peuvent être interprétés en termes d'odds (cotes). Par exemple, un coefficient positif indique qu'une augmentation de la variable indépendante augmente les chances que la variable dépendante soit égale à 1.
+
+5. **Extensions**: Bien qu'elle soit principalement utilisée pour des problèmes de classification binaire, la régression logistique peut également être étendue à des cas multiclasse à l'aide de techniques telles que la régression logistique multinomiale.
+
+
+Voici le code d'implémentation d'une régression logistique simple:
+```python
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+import pandas as pd
+
+# Séparation 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Instanciation du modèle régression logistique
+clf = LogisticRegression(random_state=0)
+
+# Entraînement du modèle
+clf.fit(X_train, y_train)
+
+# Prédiction sur les données de test
+clf.predict(X_test)
+clf.predict_proba(X_test)
+clf_score =  clf.score(X_test, y_test)
+
+# Affichage du score du modèle
+print(f"Score clf: {clf_score}")
+print(f"Pourcentage d'erreur sur les tests: {round((1-clf_score)*100, 2)}%")
+
+# Affichage des coefficients du modèle
+coefficients = pd.Series(clf.coef_.flatten(), index=X.columns)
+print("\nCoefficients du modèle logistique:")
+print(coefficients)
+```
+
+
+## Affichage 
+
+Pour tracer une régression, il est possible d'utiliser `plotly.express` ou `plotly.graph_objects` pour créer des visualisations interactives:
+```python
+import numpy as np
+import pandas as pd
+import plotly.express as px
+
+
+# Si X est une matrice (n_samples, n_features): Utiliser une seule colonne pour le tracé
+data = pd.DataFrame({'Feature': X[:, 0], 'Target': y})  # Prendre la première caractéristique
+
+# Si X est un vecteur (n_samples):
+data = pd.DataFrame({'Feature': X.flatten(), 'Target': y})
+
+# Instanciation et entraînement du modèle de régression choisi
+model = #RegressionModelFunction()
+model.fit(X, y)
+
+# Créer un espace de valeurs pour la prédiction
+X_range = np.linspace(X.min(), X.max(), 300).reshape(-1, 1)
+y_pred = model.predict_proba(X_range)[:, 1]  # Probabilités de la classe positive
+
+# Tracer les données et la courbe de régression logistique avec Plotly
+fig = px.scatter(data, x='Feature', y='Target', title='Régression Logistique', labels={'Target': 'Classe', 'Feature': 'Feature'})
+fig.add_scatter(x=X_range.flatten(), y=y_pred, mode='lines', name='Courbe de régression', line=dict(color='red'))
+
+# Afficher la figure
+fig.show()
+```
