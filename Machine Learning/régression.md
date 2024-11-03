@@ -282,11 +282,7 @@ Voici quelques caractéristiques clés de la régression logistique:
 
 1. **Variable dépendante binaire**: La régression logistique est principalement utilisée lorsque la variable cible est binaire (par exemple, succès/échec, oui/non, 0/1).
 
-2. **Fonction logistique**: La régression logistique utilise la fonction logistique (ou sigmoïde) pour modéliser la probabilité que la variable dépendante prenne la valeur 1. La fonction logistique est définie comme :
-   \[
-   P(Y=1|X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_k X_k)}}
-   \]
-   où \( P(Y=1|X) \) est la probabilité que \( Y \) soit égal à 1, \( \beta_0 \) est l'ordonnée à l'origine, et \( \beta_1, \beta_2, \ldots, \beta_k \) sont les coefficients des variables indépendantes.
+2. **Fonction logistique**: La régression logistique utilise la fonction logistique (ou sigmoïde) pour modéliser la probabilité que la variable dépendante prenne la valeur 1. La fonction logistique est définie comme : $P(Y=1|X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_k X_k)}}$ où \( P(Y=1|X) \) est la probabilité que \( Y \) soit égal à 1, \( \beta_0 \) est l'ordonnée à l'origine, et \( \beta_1, \beta_2, \ldots, \beta_k \) sont les coefficients des variables indépendantes.
 
 3. **Estimation des paramètres**: Les coefficients du modèle sont généralement estimés par la méthode de maximum de vraisemblance, qui cherche à maximiser la probabilité d'observer les données données les paramètres du modèle.
 
