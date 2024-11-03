@@ -9,7 +9,7 @@ A utiliser dans le cas d'un problème **supervisé** avec un label **quantitatif
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
-# Séparation 
+# Division des données en ensembles d'entraînement et de test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Instanciation de sklearn.linear_model.LinearRegression
@@ -102,109 +102,15 @@ A utiliser dans le cas d'un problème **supervisé** avec un label **quantitatif
 Le code pour effectuer une régression linéaire multiple est le même que celui pour créer une régression linéaire sauf que maintenant, $\mathcal{X}$ est une matrice où chaque colonne représente une variable indépendante (ou prédicteur), et chaque ligne représente une observation. 
 
 ### Sélection des variables
-Toutes les variables à disposition dans $\mathcal{X}$ ne sont pas forcément nécessaire pour la prédiction de la sortie. Il faut alors procéder à la sélection des variables. Il existe plusieurs méthodes:
-
-#### Forward BIC
-La méthode **Forward BIC** (Bayesian Information Criterion) est une technique qui vise à sélectionner un sous-ensemble de variables qui contribue le mieux à la prédiction de la variable cible, tout en minimisant la complexité du modèle. Le BIC est un critère qui pénalise la complexité du modèle (nombre de paramètres) tout en tenant compte de la qualité de l'ajustement. Il aide à éviter le surapprentissage en ajoutant une pénalité plus forte pour les modèles complexes par rapport à d'autres critères comme l'AIC (Akaike Information Criterion).
-
-Voici le code d'implémentation de la méthode forward BIC:
-```python
-import numpy as np
-import statsmodels.api as sm
-
-# Fonction pour calculer le BIC
-def calculate_bic(y_true, y_pred, num_params):
-    residual_sum_of_squares = np.sum((y_true - y_pred) ** 2)
-    n = len(y_true)
-    return n * np.log(residual_sum_of_squares / n) + num_params * np.log(n)
-
-# Fonction de Forward BIC
-def forward_bic(X, y):
-    remaining_features = list(X.columns)
-    selected_features = []
-    best_bic = float('inf')
-
-    while remaining_features:
-        bic_values = []
-        
-        # Essayer d'ajouter chaque variable restante
-        for feature in remaining_features:
-            current_features = selected_features + [feature]
-            X_current = sm.add_constant(X[current_features])
-            model = sm.OLS(y, X_current).fit()
-            bic = calculate_bic(y, model.predict(), len(current_features))
-            bic_values.append(bic)
-        
-        # Trouver la variable qui minimise le BIC
-        best_bic_index = np.argmin(bic_values)
-        best_bic_value = bic_values[best_bic_index]
-        
-        if best_bic_value < best_bic:
-            best_bic = best_bic_value
-            selected_features.append(remaining_features[best_bic_index])
-            remaining_features.remove(remaining_features[best_bic_index])
-        else:
-            break  # Arrêter si le BIC ne s'améliore pas
-
-    return selected_features
-
-# Exécution de la sélection Forward BIC
-selected_features = forward_bic(X, y)
-print(f"Variables sélectionnées: {selected_features}")
-```
-
-
-
-
-#### Backward Elimination
-Cette méthode commence avec un modèle contenant toutes les variables et procède en supprimant progressivement les variables les moins significatives, basées sur des critères comme le p-value ou le BIC. Elle continue jusqu'à ce qu'aucune variable ne puisse être éliminée sans dégrader la performance du modèle.
-
-Voici le code d'implémentation de la méthode backward elimination:
-```python
-import numpy as np
-import statsmodels.api as sm
-
-# Fonction pour calculer le BIC
-def calculate_bic(y_true, y_pred, num_params):
-    residual_sum_of_squares = np.sum((y_true - y_pred) ** 2)
-    n = len(y_true)
-    return n * np.log(residual_sum_of_squares / n) + num_params * np.log(n)
-
-# Fonction de Backward Elimination
-def backward_elimination(X, y):
-    features = list(X.columns)
-    best_bic = float('inf')
-
-    while features:
-        X_current = sm.add_constant(X[features])
-        model = sm.OLS(y, X_current).fit()
-        
-        # Calculer le BIC pour le modèle actuel
-        bic = calculate_bic(y, model.predict(), len(features))
-        
-        # Trouver la variable avec la plus haute p-value
-        p_values = model.pvalues.iloc[1:]  # Ignorer l'interception
-        max_p_value = p_values.max()
-        
-        if max_p_value > 0.05:  # Seuil de signification
-            feature_to_remove = p_values.idxmax()
-            features.remove(feature_to_remove)
-        else:
-            break  # Arrêter si toutes les p-values sont en dessous du seuil
-
-    return features
-
-# Exécution de la sélection Backward Elimination
-selected_features = backward_elimination(X, y)
-print(f"Variables sélectionnées: {selected_features}")
-```
-
+Toutes les variables à disposition dans $\mathcal{X}$ ne sont pas forcément nécessaire pour la prédiction de la sortie. Il faut alors procéder à la sélection des variables. Il existe plusieurs méthodes (cf. [Pre-processing doc.](pre-processing.md#sélection-des-variables)
+).    
+Une fois les variables pertienentes sélectionnées, une régression linéaire multiple peut être réalisée. 
 
 <br>
 <br>
 
 ### Régression avec régularisation
-### Régression linéaire avec régularisation Lasso
+#### Régression linéaire avec régularisation Lasso
 La régression lasso présente plusieurs intérêts, notamment :
 
 1. **Sélection de variables**: Lasso pénalise les coefficients des variables, ce qui peut conduire à mettre certains d'entre eux à zéro. Cela permet d'identifier et de conserver uniquement les variables les plus pertinentes, simplifiant ainsi le modèle.
@@ -224,7 +130,7 @@ Voici le code d'implémentation d'une régression Lasso simple:
 from sklearn.linear_model import Lasso
 from sklearn.model_selection import train_test_split
 
-# Séparation 
+# Division des données en ensembles d'entraînement et de test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Coefficient de contrôle de l'ampleur de la pénalisation (L1) appliquée aux coefficients de la régression
@@ -247,7 +153,7 @@ print(coefficients)
 ```
 
 
-### Régression linéaire avec régularisation Ridge
+#### Régression linéaire avec régularisation Ridge
 La régression **Ridge** est idéale pour les situations avec multicolinéarité et quand on veut des coefficients plus stables sans nécessairement réduire le nombre de variables.
 
 1. **Gestion de la multicolinéarité**: Ridge est particulièrement efficace lorsque les variables d'entrée sont fortement corrélées. En ajoutant une pénalité sur la somme des carrés des coefficients (pénalité l2), elle stabilise les estimations et réduit la variance.
@@ -262,7 +168,7 @@ Voici le code d'implémentation d'une régression Ridge simple:
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 
-# Séparation 
+# Division des données en ensembles d'entraînement et de test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Coefficient de contrôle de l'ampleur de la pénalisation (L2) appliquée aux coefficients de la régression
@@ -286,7 +192,7 @@ print(coefficients)
 
 
 
-### Régression Elastic Net
+#### Régression Elastic Net
 
 La régression **Elastic Net** est préférable quand on a de nombreuses variables corrélées et qu'on souhaite réaliser une sélection de variables tout en gardant une certaine robustesse.
 
@@ -302,7 +208,7 @@ Voici le code d'implémentation d'une régression Elastic Net simple:
 from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import train_test_split
 
-# Séparation 
+# Division des données en ensembles d'entraînement et de test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Coefficient de contrôle de l'ampleur de la pénalisation appliquée aux coefficients de la régression
@@ -347,7 +253,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import train_test_split
 import pandas as pd
 
-# Séparation 
+# Division des données en ensembles d'entraînement et de test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Instanciation du modèle PLS avec un nombre de composantes latentes
@@ -395,7 +301,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 import pandas as pd
 
-# Séparation 
+# Division des données en ensembles d'entraînement et de test
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Instanciation du modèle régression logistique
@@ -419,6 +325,11 @@ print("\nCoefficients du modèle logistique:")
 print(coefficients)
 ```
 
+
+<br>
+<br>
+<br>
+<br>
 
 ## Affichage 
 
