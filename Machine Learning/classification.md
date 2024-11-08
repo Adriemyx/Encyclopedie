@@ -163,6 +163,78 @@ def plot_decision_boundary_tree(t, X, y, fig_size=(22, 8)):
 plot_decision_boundary_tree(dt, X, y)
 ```
 
+## Forêts aléatoires 
+
+Les **forêts aléatoires** (*Random Forest*) sont un algorithme d'**ensemble learning** dont l'idée est de combiner plusieurs arbres de décision pour obtenir une prédiction plus robuste et plus précise. En particulier, l'algorithme construit une **forêt** d'arbres de décision en introduisant de l'**aléatoire** à deux niveaux:
+1. **Échantillonnage bootstrap** des données (sub-sampling des données d'entraînement).
+2. **Sélection aléatoire des caractéristiques** à chaque division (split) dans chaque arbre.
+
+L'algorithme des forêts aléatoires fonctionne en plusieurs étapes:
+
+#### 1. **Création d'arbres de décision aléatoires**
+   - L'idée de base est de créer un ensemble (ou une "forêt") de plusieurs **arbres de décision**, chacun étant construit à partir d'un sous-ensemble aléatoire des données d'entraînement.
+   - L'**échantillonnage bootstrap** est utilisé pour créer des sous-ensembles de données. Cela signifie que pour chaque arbre, on tire aléatoirement des échantillons de l'ensemble d'entraînement, avec remplacement (certains exemples peuvent être répétés, d'autres non).
+   
+#### 2. **Sélection aléatoire des caractéristiques**
+   - À chaque nœud d'un arbre de décision, au lieu d'examiner toutes les caractéristiques pour décider de la meilleure division, un sous-ensemble aléatoire des caractéristiques est choisi et utilisé pour effectuer la division à ce nœud.
+   - Cela permet d'introduire encore plus de diversité entre les arbres et de réduire la corrélation entre eux, ce qui améliore la performance du modèle global.
+
+#### 3. **Entraînement des arbres**  
+   - Chaque arbre est entraîné sur un sous-ensemble différent de données (grâce au bootstrap) et en utilisant un sous-ensemble aléatoire de caractéristiques à chaque division. 
+   - Cela signifie que chaque arbre peut avoir des structures légèrement différentes, ce qui aide à réduire le sur-apprentissage (overfitting) lorsque ces arbres sont combinés.
+
+#### 4. **Prédiction finale**
+   - Une fois que tous les arbres ont été entraînés, la prédiction de la forêt est effectuée par **vote majoritaire** (pour la classification) ou **moyenne** (pour la régression).
+     - **Classification**: Chaque arbre "vote" pour une classe, et la classe ayant le plus grand nombre de votes devient la prédiction finale.
+     - **Régression**: La prédiction finale est la moyenne des prédictions de tous les arbres.
+
+### Avantages des Forêts Aléatoires:
+1. **Robustesse**: En combinant plusieurs arbres, le modèle devient plus robuste aux erreurs d'échantillonnage et aux données bruitées.
+2. **Réduction du sur-apprentissage**: L'introduction de l'aléatoire dans la construction des arbres réduit le risque de sur-apprentissage, surtout par rapport à un arbre de décision profond qui pourrait sur-adapter aux données.
+3. **Interprétabilité partielle**: Bien que moins interprétable qu'un arbre de décision unique, on peut toujours obtenir des informations sur l'importance des caractéristiques utilisées dans les arbres.
+4. **Capacité à gérer des données complexes**: Les forêts aléatoires peuvent être utilisées pour des problèmes non linéaires et complexes et sont particulièrement efficaces lorsque le nombre de variables explicatives est élevé.
+
+### Inconvénients des Forêts Aléatoires:
+1. **Complexité computationnelle**: Comme il s'agit de combiner un grand nombre d'arbres, les forêts aléatoires peuvent être plus lentes à entraîner et à prédire, surtout sur de très grands ensembles de données.
+2. **Moins interprétable qu'un arbre de décision simple**: Bien qu'on puisse analyser l'importance des variables, le modèle global est moins facile à comprendre par rapport à un arbre de décision simple.
+3. **Besoin de réglage des hyperparamètres**: Le modèle peut avoir plusieurs hyperparamètres importants à ajuster (comme le nombre d'arbres, la profondeur maximale des arbres, le nombre minimum d'échantillons par feuille, etc.).
+
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+# Division des données en ensembles d'entraînement et de test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Créer une forêt aléatoire
+rf = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
+
+# Entraîner la forêt aléatoire
+rf.fit(X_train, y_train)
+
+# Prédire les labels pour les données de test
+y_pred = rf.predict(X_test)
+
+# Calculer l'exactitude
+accuracy = (y_pred == y_test).mean()
+print(f"Accuracy: {accuracy}")
+```
+
+Voici quelques hyperparamètres importants que à ajuster pour améliorer la performance du modèle de forêt aléatoire:
+- **`n_estimators`**: Le nombre d'arbres de décision dans la forêt. Plus il y a d'arbres, plus la prédiction sera robuste, mais cela augmente également le coût computationnel.
+- **`max_depth`**: La profondeur maximale de chaque arbre. Limiter la profondeur aide à éviter le sur-apprentissage.
+- **`min_samples_split`**: Le nombre minimum d'échantillons nécessaires pour diviser un nœud. Un nombre plus élevé peut rendre l'arbre plus robuste aux petites variations des données.
+- **`min_samples_leaf`**: Le nombre minimum d'échantillons qu'un nœud feuille doit contenir. Cela peut être utilisé pour éviter la création de feuilles avec très peu d'exemples.
+- **`max_features`**: Le nombre maximal de caractéristiques à considérer pour chaque division. Cela contrôle le degré de diversité entre les arbres de la forêt.
+- **`bootstrap`**: Si l'échantillonnage bootstrap est utilisé pour la création des sous-ensembles de données (par défaut, c'est vrai).
+- **`oob_score`**: Le score Out-Of-Bag (OOB), qui permet d'estimer la performance du modèle sans utiliser un ensemble de validation séparé.
+
+
+<br>
+<br>
+
+
 ## Boosting
 ### AdaBoost 
 AdaBoost (pour Adaptive Boosting) est un algorithme d'ensemble learning qui combine plusieurs classificateurs faibles (c'est-à-dire des modèles qui, seuls, n'ont pas une grande performance) pour créer un classificateur plus puissant. Il fonctionne en "boostant" progressivement la performance des modèles en les combinant de manière adaptative.
