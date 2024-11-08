@@ -25,27 +25,27 @@ y_pred = lr.predict(X_test)
 ### Métriques de test
 Pour tester de la pertinence de la régression, il faut pouvoir l'éavluer. Pour évaluer les performances d'un modèle de régression linéaire avec `scikit-learn`, il existe plusieurs métriques de test prédéfinies:
 
-1. **MSE (Mean Squared Error)** : C'est la moyenne des carrés des erreurs. Il mesure la dispersion des erreurs.
+1. **MSE (Mean Squared Error)**: C'est la moyenne des carrés des erreurs. Il mesure la dispersion des erreurs.
 
    ```python
    from sklearn.metrics import mean_squared_error
    mse = mean_squared_error(y_true, y_pred)
    ```
 
-2. **RMSE (Root Mean Squared Error)** : C'est la racine carrée du MSE. Il est dans la même unité que la variable cible, ce qui le rend plus interprétable.
+2. **RMSE (Root Mean Squared Error)**: C'est la racine carrée du MSE. Il est dans la même unité que la variable cible, ce qui le rend plus interprétable.
 
    ```python
    rmse = mean_squared_error(y_true, y_pred, squared=False)
    ```
 
-3. **MAE (Mean Absolute Error)** : C'est la moyenne des erreurs absolues. Cela donne une idée de la taille des erreurs en unités de la variable cible.
+3. **MAE (Mean Absolute Error)**: C'est la moyenne des erreurs absolues. Cela donne une idée de la taille des erreurs en unités de la variable cible.
 
    ```python
    from sklearn.metrics import mean_absolute_error
    mae = mean_absolute_error(y_true, y_pred)
    ```
 
-4. **R² (Coefficient de détermination)** : Cette métrique indique la proportion de la variance dans la variable cible qui est prédit par le modèle. Elle varie entre 0 et 1, avec des valeurs plus élevées indiquant un meilleur ajustement.
+4. **R² (Coefficient de détermination)**: Cette métrique indique la proportion de la variance dans la variable cible qui est prédit par le modèle. Elle varie entre 0 et 1, avec des valeurs plus élevées indiquant un meilleur ajustement.
 
    ```python
    from sklearn.metrics import r2_score
@@ -111,7 +111,7 @@ Une fois les variables pertienentes sélectionnées, une régression linéaire m
 
 ### Régression avec régularisation
 #### Régression linéaire avec régularisation Lasso
-La régression lasso présente plusieurs intérêts, notamment :
+La régression lasso présente plusieurs intérêts, notamment:
 
 1. **Sélection de variables**: Lasso pénalise les coefficients des variables, ce qui peut conduire à mettre certains d'entre eux à zéro. Cela permet d'identifier et de conserver uniquement les variables les plus pertinentes, simplifiant ainsi le modèle.
 
@@ -282,7 +282,7 @@ Voici quelques caractéristiques clés de la régression logistique:
 
 1. **Variable dépendante binaire**: La régression logistique est principalement utilisée lorsque la variable cible est binaire (par exemple, succès/échec, oui/non, 0/1).
 
-2. **Fonction logistique**: La régression logistique utilise la fonction logistique (ou sigmoïde) pour modéliser la probabilité que la variable dépendante prenne la valeur 1. La fonction logistique est définie comme : $P(Y=1|X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_k X_k)}}$ où \( P(Y=1|X) \) est la probabilité que \( Y \) soit égal à 1, \( \beta_0 \) est l'ordonnée à l'origine, et \( \beta_1, \beta_2, \ldots, \beta_k \) sont les coefficients des variables indépendantes.
+2. **Fonction logistique**: La régression logistique utilise la fonction logistique (ou sigmoïde) pour modéliser la probabilité que la variable dépendante prenne la valeur 1. La fonction logistique est définie comme: $P(Y=1|X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_k X_k)}}$ où \( P(Y=1|X) \) est la probabilité que \( Y \) soit égal à 1, \( \beta_0 \) est l'ordonnée à l'origine, et \( \beta_1, \beta_2, \ldots, \beta_k \) sont les coefficients des variables indépendantes.
 
 3. **Estimation des paramètres**: Les coefficients du modèle sont généralement estimés par la méthode de maximum de vraisemblance, qui cherche à maximiser la probabilité d'observer les données données les paramètres du modèle.
 
@@ -320,6 +320,115 @@ coefficients = pd.Series(clf.coef_.flatten(), index=X.columns)
 print("\nCoefficients du modèle logistique:")
 print(coefficients)
 ```
+
+<br>
+<br>
+
+## Régression Gaussienne
+
+```python
+from smt.surrogate_models import KRG
+
+# Instanciation du modèle
+gpr = KRG()
+
+# Entraînement du modèle
+gpr.set_training_values(X_data, y_data)
+gpr.train()
+
+print('Theta optimal', gpr.optimal_theta)
+```
+
+
+## Forets aléatoires
+
+### Forêts aléatoires pour la régression
+
+Les **forêts aléatoires** (*Random Forest*) sont un algorithme d'**ensemble learning** dont l'idée est de combiner plusieurs arbres de décision pour obtenir une prédiction plus robuste et plus précise. En particulier, l'algorithme construit une **forêt** d'arbres de décision en introduisant de l'**aléatoire** à deux niveaux:
+1. **Échantillonnage bootstrap** des données (sub-sampling des données d'entraînement).
+2. **Sélection aléatoire des caractéristiques** à chaque division (split) dans chaque arbre.
+
+L'algorithme des forêts aléatoires fonctionne en plusieurs étapes:
+
+#### 1. **Création d'arbres de décision aléatoires**
+   - Comme dans la version pour la classification, on crée plusieurs **arbres de décision** en échantillonnant aléatoirement les données d'entraînement à chaque arbre, à l'aide de l'**échantillonnage bootstrap**.
+   - Chaque arbre est donc construit sur un sous-ensemble différent des données, ce qui introduit de la diversité et améliore la généralisation du modèle.
+
+#### 2. **Sélection aléatoire des caractéristiques**
+   - À chaque nœud de l'arbre, au lieu d'examiner toutes les caractéristiques pour choisir la meilleure coupure, un sous-ensemble aléatoire des caractéristiques est choisi. Cela contribue à la diversité des arbres et à la réduction de la corrélation entre eux.
+
+#### 3. **Entraînement des arbres**
+   - Chaque arbre est entraîné indépendamment sur un sous-ensemble des données, avec une sélection aléatoire des caractéristiques à chaque nœud, ce qui permet de créer des arbres avec des structures différentes.
+
+#### 4. **Prédiction finale**
+   - La prédiction finale de la forêt aléatoire est la **moyenne** des prédictions de tous les arbres. Cela permet d'obtenir une estimation plus précise que celle d'un seul arbre de décision.
+
+---
+
+### Avantages des Forêts Aléatoires:
+1. **Robustesse**
+2. **Précision**
+3. **Adaptabilité**
+
+### Inconvénients des Forêts Aléatoires pour la régression:
+1. **Complexité computationnelle**
+2. **Moins interprétable**
+3. **Risque d'overfitting avec des arbres trop profonds**
+
+
+```python
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# Division des données en ensembles d'entraînement et de test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Créer une forêt aléatoire pour la régression
+rf_regressor = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42)
+
+# Entraîner la forêt aléatoire
+rf_regressor.fit(X_train, y_train)
+
+# Prédire les valeurs pour les données de test
+y_pred = rf_regressor.predict(X_test)
+
+# Calculer l'erreur absolue moyenne (MAE) ou l'erreur quadratique moyenne (RMSE)
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+mae = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+print(f"Mean Absolute Error (MAE): {mae}")
+print(f"Root Mean Squared Error (RMSE): {rmse}")
+
+# Visualiser les résultats
+plt.scatter(y_test, y_pred)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--')
+plt.xlabel('Vrai y')
+plt.ylabel('Prédiction y')
+plt.title('Prédictions vs Réel')
+plt.show()
+
+# Importance des features
+importances = rf_regressor.feature_importances_
+std = np.std([tree.feature_importances_ for tree in rf_regressor.estimators_], axis=0)
+indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(12, 8))
+plt.title("Importance des caractéristiques")
+plt.bar(range(X.shape[1]), importances[indices], color="r", yerr=std[indices], align="center")
+plt.xticks(range(X.shape[1]), indices)
+plt.xlim([-1, X.shape[1]])
+plt.show()
+```
+
+### Hyperparamètres importants à ajuster pour la régression:
+1. **`n_estimators`**: Le nombre d'arbres dans la forêt. Un nombre plus élevé peut améliorer la précision, mais augmente aussi le temps de calcul.
+2. **`max_features`**: Le nombre maximal de caractéristiques à considérer pour chaque division d'arbre. Cela augmente la diversité des arbres et réduit la corrélation entre eux.
+3. **`bootstrap`**: Si l'échantillonnage bootstrap est utilisé pour l'échantillon des données (par défaut, c'est `True`).
+4. **`oob_score`**: Le score Out-Of-Bag, qui permet d'estimer la performance du modèle sans un ensemble de validation séparé.
 
 
 <br>
