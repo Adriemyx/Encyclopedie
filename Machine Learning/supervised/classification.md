@@ -3,34 +3,6 @@
 Dans ce document sera présenté quelques bases de code, notamment avec la libraire `scikit-learn`, pour faire de la classification sur python.
 
 
-## K-Means
-K-means est un algorithme de clustering non supervisé utilisé pour partitionner un ensemble de données en **K** groupes (ou clusters) basés sur des caractéristiques similaires. 
-
-```python
-from sklearn.cluster import KMeans
-from sklearn.model_selection import train_test_split
-
-# Séparation 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Choix du nombre de classes pour séparer les données
-nb_clusters = ...
-
-# Création d'un objet KMeans avec nb_clusters clusters
-kmeans = KMeans(n_clusters=nb_clusters)  
-
-# Ajustement du modèle sur les données d'entraînement
-kmeans.fit(X_train)  
-
-# Prédiction des clusters pour chaque point de X_train
-y_pred = kmeans.predict(X_train)
-
-```
-
-*<u>Remarque:</u> Ici $\mathcal{X}$ peut être une matrice ou un vecteur*.
-
-
-
 ## SVM
 SVM est un algorithme de classification supervisée pour séparer deux classes en maximisant la **marge** entre les deux points les plus proches de l'hyperplan séparateur.
 
