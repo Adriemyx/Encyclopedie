@@ -1,4 +1,4 @@
-<h1 align='center'> Machine learning - Régression </h1>
+<h1 align='center'> Machine learning - Régression 📈</h1>
 
 Dans ce document sera présenté quelques bases de code, notamment avec la libraire `scikit-learn`, pour faire de la régression sur python.
 
