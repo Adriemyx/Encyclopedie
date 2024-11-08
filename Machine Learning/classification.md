@@ -1,4 +1,4 @@
-<h1 align='center'> Machine learning - Classification </h1>
+<h1 align='center'> Machine learning - Classification 🗂️</h1>
 
 Dans ce document sera présenté quelques bases de code, notamment avec la libraire `scikit-learn`, pour faire de la classification sur python.
 
