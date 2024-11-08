@@ -184,20 +184,17 @@ L'algorithme des forêts aléatoires fonctionne en plusieurs étapes:
    - Cela signifie que chaque arbre peut avoir des structures légèrement différentes, ce qui aide à réduire le sur-apprentissage (overfitting) lorsque ces arbres sont combinés.
 
 #### 4. **Prédiction finale**
-   - Une fois que tous les arbres ont été entraînés, la prédiction de la forêt est effectuée par **vote majoritaire** (pour la classification) ou **moyenne** (pour la régression).
-     - **Classification**: Chaque arbre "vote" pour une classe, et la classe ayant le plus grand nombre de votes devient la prédiction finale.
-     - **Régression**: La prédiction finale est la moyenne des prédictions de tous les arbres.
+   - Une fois que tous les arbres ont été entraînés, la prédiction de la forêt est effectuée par **vote majoritaire** (pour la classification) ou **moyenne** (pour la régression).   
+  Chaque arbre "vote" pour une classe, et la classe ayant le plus grand nombre de votes devient la prédiction finale.
 
 ### Avantages des Forêts Aléatoires:
-1. **Robustesse**: En combinant plusieurs arbres, le modèle devient plus robuste aux erreurs d'échantillonnage et aux données bruitées.
-2. **Réduction du sur-apprentissage**: L'introduction de l'aléatoire dans la construction des arbres réduit le risque de sur-apprentissage, surtout par rapport à un arbre de décision profond qui pourrait sur-adapter aux données.
-3. **Interprétabilité partielle**: Bien que moins interprétable qu'un arbre de décision unique, on peut toujours obtenir des informations sur l'importance des caractéristiques utilisées dans les arbres.
-4. **Capacité à gérer des données complexes**: Les forêts aléatoires peuvent être utilisées pour des problèmes non linéaires et complexes et sont particulièrement efficaces lorsque le nombre de variables explicatives est élevé.
+1. **Robustesse**
+2. **Réduction du sur-apprentissage**
+3. **Capacité à gérer des données complexes**
 
 ### Inconvénients des Forêts Aléatoires:
-1. **Complexité computationnelle**: Comme il s'agit de combiner un grand nombre d'arbres, les forêts aléatoires peuvent être plus lentes à entraîner et à prédire, surtout sur de très grands ensembles de données.
-2. **Moins interprétable qu'un arbre de décision simple**: Bien qu'on puisse analyser l'importance des variables, le modèle global est moins facile à comprendre par rapport à un arbre de décision simple.
-3. **Besoin de réglage des hyperparamètres**: Le modèle peut avoir plusieurs hyperparamètres importants à ajuster (comme le nombre d'arbres, la profondeur maximale des arbres, le nombre minimum d'échantillons par feuille, etc.).
+1. **Complexité computationnelle**
+2. **Moins interprétable qu'un arbre de décision simple**
 
 
 ```python
@@ -219,13 +216,22 @@ y_pred = rf.predict(X_test)
 # Calculer l'exactitude
 accuracy = (y_pred == y_test).mean()
 print(f"Accuracy: {accuracy}")
+
+# Importance des features
+importances = rf.feature_importances_
+std = np.std([tree.feature_importances_ for tree in rf.estimators_], axis=0)
+indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(22, 8))
+plt.title("Feature importances")
+plt.bar(range(X.shape[1]), importances[indices], color="r", yerr=std[indices], align="center")
+plt.xticks(range(X.shape[1]), indices)
+plt.xlim([-1, X.shape[1]])
+plt.show()
 ```
 
 Voici quelques hyperparamètres importants que à ajuster pour améliorer la performance du modèle de forêt aléatoire:
 - **`n_estimators`**: Le nombre d'arbres de décision dans la forêt. Plus il y a d'arbres, plus la prédiction sera robuste, mais cela augmente également le coût computationnel.
-- **`max_depth`**: La profondeur maximale de chaque arbre. Limiter la profondeur aide à éviter le sur-apprentissage.
-- **`min_samples_split`**: Le nombre minimum d'échantillons nécessaires pour diviser un nœud. Un nombre plus élevé peut rendre l'arbre plus robuste aux petites variations des données.
-- **`min_samples_leaf`**: Le nombre minimum d'échantillons qu'un nœud feuille doit contenir. Cela peut être utilisé pour éviter la création de feuilles avec très peu d'exemples.
 - **`max_features`**: Le nombre maximal de caractéristiques à considérer pour chaque division. Cela contrôle le degré de diversité entre les arbres de la forêt.
 - **`bootstrap`**: Si l'échantillonnage bootstrap est utilisé pour la création des sous-ensembles de données (par défaut, c'est vrai).
 - **`oob_score`**: Le score Out-Of-Bag (OOB), qui permet d'estimer la performance du modèle sans utiliser un ensemble de validation séparé.
