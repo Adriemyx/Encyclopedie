@@ -38,10 +38,6 @@ Une fois l'application lancée, vous pourrez :
 
 Pour quitter l'application Streamlit, fermez simplement l'onglet du navigateur ou interrompez le processus dans le terminal en utilisant `Ctrl + C`.
 
-## Contributions 🤝
-
-Les contributions sont les bienvenues ! Si vous avez des suggestions ou des améliorations, n'hésitez pas à soumettre une pull request.
-
 ---
 
 Profitez de votre exploration des fonctions d'activation ! 📈
