@@ -5,18 +5,18 @@ Ils sont principalement utilisés en régression et en optimisation de fonctions
 Un GP définit une distribution sur des fonctions, permettant de faire des prédictions probabilistes dans des problèmes non paramétriques.
 
 Un processus gaussien est spécifié par:
-- Une fonction moyenne: $ \mu(x) $, qui donne l'espérance des sorties en un point.
-- Une fonction de covariance (ou noyau): $ k(x, x') $, qui encode la dépendance entre les points $ x $ et $ x' $.
+- Une fonction moyenne: $\mu(x)$, qui donne l'espérance des sorties en un point.
+- Une fonction de covariance (ou noyau): $k(x, x')$, qui encode la dépendance entre les points $x$ et $x'$.
 
 Formellement: $f(x) \sim \mathcal{GP}(\mu(x), k(x, x'))$
 <br>
 
 ## **I. Principes Fondamentaux**
 
-### 1. **Définition:** Tout ensemble de points $ \{x_1, ..., x_n\} $ tiré d'un processus gaussien suit une distribution multivariée gaussienne: $f(x) = \mathcal{N}(\mu, K)$
+### 1. **Définition:** Tout ensemble de points $\{x_1, ..., x_n\}$ tiré d'un processus gaussien suit une distribution multivariée gaussienne: $f(x) = \mathcal{N}(\mu, K)$
 où:
-   - $ \mu $ est un vecteur de moyennes,
-   - $ K $ est la matrice de covariance définie par le noyau.
+   - $\mu$ est un vecteur de moyennes,
+   - $K$ est la matrice de covariance définie par le noyau.
 
 ### 2. **Noyaux Courants:**
    - **RBF (Radial Basis Function)** ou noyau gaussien:
@@ -27,7 +27,7 @@ où:
    $k(x, x') = \sigma_f^2 \exp\left(-\frac{2\sin^2(\pi |x - x'|/p)}{\ell^2}\right)$
 
 ### 3. **Régression Gaussienne:**
-   Étant donné des observations $ X = \{x_1, ..., x_n\} $ et leurs sorties $ y = \{y_1, ..., y_n\} $, 
+   Étant donné des observations $X = \{x_1, ..., x_n\}$ et leurs sorties $y = \{y_1, ..., y_n\}$, 
    le GP utilise les relations probabilistes pour prédire les valeurs en des points non observés $ X^* $.
 
 <br>
@@ -35,8 +35,8 @@ où:
 ## **II. Régression Gaussienne**
 
 Soit:
-- Les observations: $ \mathbf{y} \sim \mathcal{N}(\mathbf{\mu}, \mathbf{K} + \sigma^2 \mathbf{I}) $,
-- Les points de prédiction $ \mathbf{f}_* \sim \mathcal{N}(\mu_*, K_*) $.
+- Les observations: $\mathbf{y} \sim \mathcal{N}(\mathbf{\mu}, \mathbf{K} + \sigma^2 \mathbf{I})$,
+- Les points de prédiction $\mathbf{f}_* \sim \mathcal{N}(\mu_*, K_*)$.
 
 Les prédictions sont données par:
 $\mathbf{f}_* | \mathbf{X}, \mathbf{y}, \mathbf{X}_* \sim \mathcal{N}(\mathbf{\mu}_*, \mathbf{\Sigma}_*)$
@@ -140,10 +140,10 @@ Le principe central repose sur deux composants principaux:
 
 ### **1. Processus de l’Optimisation Bayésienne**
 
-1. **Définir la fonction cible** $ f(x) $, souvent coûteuse à évaluer.
-2. **Construire un modèle probabiliste** (souvent un GP) pour approximer $ f(x) $.
+1. **Définir la fonction cible** $f(x)$, souvent coûteuse à évaluer.
+2. **Construire un modèle probabiliste** (souvent un GP) pour approximer $f(x)$.
 3. **Optimiser la fonction d’acquisition** (comme l’*Expected Improvement* ou l’*UCB*) pour sélectionner le prochain point à évaluer.
-4. **Évaluer $ f(x) $ au nouveau point** et mettre à jour le modèle.
+4. **Évaluer $f(x)$ au nouveau point** et mettre à jour le modèle.
 5. **Répéter** jusqu’à convergence ou jusqu’à atteindre un budget donné (nombre maximal d’évaluations).
 
 <br>
@@ -155,17 +155,17 @@ et l’**exploration** (explorer des zones incertaines).
 
 - **Expected Improvement (EI)**:
 $EI(x) = \mathbb{E}[\max(0, f(x) - f_{\text{best}})]$
-  Où $ f_{\text{best}} $ est la meilleure valeur observée jusqu’à présent.
+  Où $f_{\text{best}}$ est la meilleure valeur observée jusqu’à présent.
 
 - **Upper Confidence Bound (UCB)**:
 $UCB(x) = \mu(x) + \kappa \sigma(x)$
-  Où $ \mu(x) $ est la moyenne prédite, $ \sigma(x) $ est l’écart-type prédite, et $ \kappa $ contrôle l’exploration.
+  Où $\mu(x)$ est la moyenne prédite, $\sigma(x)$ est l’écart-type prédite, et $\kappa$ contrôle l’exploration.
 
 <br>
 
 ### **3. Implémentation**
 #### **a. Minimisation d'une fonction mathématique**
-Voici une implémentation simple de l’optimisation bayésienne pour minimiser une fonction $ f(x) $:
+Voici une implémentation simple de l’optimisation bayésienne pour minimiser une fonction $f(x)$:
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -307,7 +307,7 @@ plt.legend()
 plt.show()
 ```
 
-En utilisant l’optimisation bayésienne, la méthode explore intelligemment l’espace des hyperparamètres pour trouver la meilleure valeur de $ \alpha $ 
+En utilisant l’optimisation bayésienne, la méthode explore intelligemment l’espace des hyperparamètres pour trouver la meilleure valeur de $\alpha$ 
 pour la régression Ridge, tout en minimisant le nombre d’évaluations coûteuses via la validation croisée.
 
 
