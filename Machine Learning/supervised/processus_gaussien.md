@@ -36,13 +36,12 @@ où:
 
 Soit:
 - Les observations: $\mathbf{y} \sim \mathcal{N}(\mathbf{\mu}, \mathbf{K} + \sigma^2 \mathbf{I})$,
-- Les points de prédiction: $\mathbf{f}_* \sim \mathcal{N}(\mu_*, K_*)$.
+- Les points de prédiction: $\mathbf{f}^{*} \sim \mathcal{N}(\mu, K_{*})$.
 
-Les prédictions sont données par:
-$\mathbf{f}_* | \mathbf{X}, \mathbf{y}, \mathbf{X}_* \sim \mathcal{N}(\mathbf{\mu}_*, \mathbf{\Sigma}_*)$
+Les prédictions sont données par: $\mathbf{f}^{*} \mid \mathbf{X}, \mathbf{y}, \mathbf{X}^{*} \sim \mathcal{N}(\mathbf{\mu}^{*}, \mathbf{\Sigma}^{*})$
 où:
 - Moyenne prédictive: $\mu_* = K(X_*, X) [K(X, X) + \sigma^2 I]^{-1} y$
-- Covariance prédictive: $\Sigma_* = K(X_*, X_*) - K(X_*, X) [K(X, X) + \sigma^2 I]^{-1} K(X, X_*)$
+- Covariance prédictive: $\mathbf{\Sigma}^{*} = K(X_{*}, X_{*}) - K(X_{*}, X) \big[K(X, X) + \sigma^2 I\big]^{-1} K(X, X_{*})$
 
 ---
 
