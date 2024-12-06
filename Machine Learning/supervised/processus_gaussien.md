@@ -28,7 +28,7 @@ où:
 
 ### 3. **Régression Gaussienne:**
    Étant donné des observations $X = \{x_1, ..., x_n\}$ et leurs sorties $y = \{y_1, ..., y_n\}$, 
-   le GP utilise les relations probabilistes pour prédire les valeurs en des points non observés $ X^* $.
+   le GP utilise les relations probabilistes pour prédire les valeurs en des points non observés $X^*$.
 
 <br>
 
@@ -36,15 +36,13 @@ où:
 
 Soit:
 - Les observations: $\mathbf{y} \sim \mathcal{N}(\mathbf{\mu}, \mathbf{K} + \sigma^2 \mathbf{I})$,
-- Les points de prédiction $\mathbf{f}_* \sim \mathcal{N}(\mu_*, K_*)$.
+- Les points de prédiction: $\mathbf{f}_* \sim \mathcal{N}(\mu_*, K_*)$.
 
 Les prédictions sont données par:
 $\mathbf{f}_* | \mathbf{X}, \mathbf{y}, \mathbf{X}_* \sim \mathcal{N}(\mathbf{\mu}_*, \mathbf{\Sigma}_*)$
 où:
-- Moyenne prédictive:
-$\mu_* = K(X_*, X) [K(X, X) + \sigma^2 I]^{-1} y$
-- Covariance prédictive:
-$\Sigma_* = K(X_*, X_*) - K(X_*, X) [K(X, X) + \sigma^2 I]^{-1} K(X, X_*)$
+- Moyenne prédictive: $\mu_* = K(X_*, X) [K(X, X) + \sigma^2 I]^{-1} y$
+- Covariance prédictive: $\Sigma_* = K(X_*, X_*) - K(X_*, X) [K(X, X) + \sigma^2 I]^{-1} K(X, X_*)$
 
 ---
 
