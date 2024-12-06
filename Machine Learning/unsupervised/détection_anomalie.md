@@ -604,3 +604,12 @@ Le MCD est particulièrement adapté dans les contextes suivants:
 <br>
 
 ## Détection de nouveauté
+
+La détection de nouveauté consiste à identifier des instances qui diffèrent significativement des données déjà connues, mais qui peuvent ne pas être nécessairement incorrectes ou indésirables. Il s'agit d'identifier des données qui ne s'inscrivent pas dans les modèles ou distributions appris lors de l'entraînement.   
+Pour cela, il faut "apprendre le comportement normal" sur un ensemble de données propres (sans anomalies), puis prédire la valeur / le score des nouveaux points pour savoir s'ils correspondent au comportement normal ou non.
+
+
+Les méthodes non supervisées vues peuvent être utilisées dans ce cas (**One Class SVM** est encore meilleur en détection de nouvauté qu'en détection des valeurs aberrantes!)   
+**OU**   
+Utiliser l'apprentissage supervisé pour apprendre le comportement normal. Dans ce cas, lorsqu'un nouveau point arrive $(x_1, x_2, x_3)$, il est possible de prédire les valeurs des paramètres, $\hat{x_1} = f(x_2, x_3)$, $\hat{x_2} = f(x_1, x_3)$, $\hat{x_3} = f(x_1, x_2)$.   Puis de calculer les erreurs (quadratiques, absolues...) $\hat{x_i} - x_i$.   
+Dans ce cas, une erreur élevée indique que le nouveau point ne correspond pas au modèle "normal", le score d'anomalie est alors élevé.
