@@ -268,14 +268,14 @@ Le **Gradient Boosting** est une technique d'apprentissage supervisé utilisée 
 
 #### **2. Direction de la correction**
 - La fonction $h_k$ est choisie pour **pointer dans la direction qui réduit le plus rapidement la perte**. Cela revient à suivre le **gradient de la perte** par rapport au modèle $f$:   
-$h_k = \mathbb{E}_{x, y} \left[ \nabla_f L(f_{k-1}(x), y) \right]$
+$h_k = \mathbb{E}_{x, y} \left[ \nabla f L(f_{k-1}(x), y) \right]$
 - Intuitivement, $h_k$ "montre" la direction dans laquelle on doit ajuster le modèle $f_{k-1}$ pour réduire l'erreur.
 
 <br>
 
-#### **3. Rôle de $ \alpha_k $**
+#### **3. Rôle de $\alpha_k$**
 - Une fois $h_k$ trouvé, on doit déterminer combien de cette correction ajouter. C'est fait via une recherche linéaire:
-  $\alpha_k = \arg\min_\alpha \mathbb{E}_{x, y} \left[ L(f_{k-1}(x) + \alpha h_k(x), y) \right]$
+  $\alpha_k = \text{argmin}_{\alpha} \mathbb{E}_{x, y} \left[L(f_{k-1}(x) + \alpha h_k(x), y) \right]$
 - Cela garantit qu'on ajoute $h_k$ avec la bonne "intensité" pour minimiser la perte.
 
 <br>
