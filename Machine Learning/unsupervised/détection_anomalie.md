@@ -613,3 +613,40 @@ Les méthodes non supervisées vues peuvent être utilisées dans ce cas (**One 
 **OU**   
 Utiliser l'apprentissage supervisé pour apprendre le comportement normal. Dans ce cas, lorsqu'un nouveau point arrive $(x_1, x_2, x_3)$, il est possible de prédire les valeurs des paramètres, $\hat{x_1} = f(x_2, x_3)$, $\hat{x_2} = f(x_1, x_3)$, $\hat{x_3} = f(x_1, x_2)$.   Puis de calculer les erreurs (quadratiques, absolues...) $\hat{x_i} - x_i$.   
 Dans ce cas, une erreur élevée indique que le nouveau point ne correspond pas au modèle "normal", le score d'anomalie est alors élevé.
+
+
+
+## Methodes annexes
+
+1. **Boîte à Moustaches (*Boxplot*)**: Un boxplot visualise la distribution des données et identifie les outliers comme des points situés en dehors des moustaches ($1,5$ fois l'intervalle interquartile). Cela permet d'identifier **visuellement** les outliers.
+
+```python
+import matplotlib.pyplot as plt
+
+plt.boxplot(data)
+plt.title('Boxplot des données')
+plt.show()
+```
+
+
+2. **Distance de Cook**: La distance de Cook mesure l'influence d'un point de données sur les coefficients du modèle de régression. Elle évalue l'impact d'une observation sur les valeurs ajustées: Un point avec une distance de Cook supérieure à $1$ ou à $\frac{4}{n}$, où $n$ est le nombre d'observations, peut être considéré comme influent.   
+
+La distance de cook peut se calculer manuellement ou via statsmodels:
+  
+```python
+import statsmodels.api as sm
+
+model = sm.OLS(y, X).fit()
+influence = model.get_influence()
+cooks_d = influence.cooks_distance
+```
+
+
+3. **Résidus Studentisés**: Les résidus studentisés sont des résidus standardisés qui tiennent compte de la variance des résidus, permettant d'identifier les observations atypiques: Des résidus studentisés supérieurs à $3$ ou inférieurs à $-3$ indiquent des points qui s'écartent de la tendance générale.
+
+```python
+studentized_residuals = influence.resid_studentized
+```
+
+
+Il est possible également de faire des tests statistiques.
