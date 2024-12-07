@@ -54,45 +54,6 @@ Pour tester de la pertinence de la régression, il faut pouvoir l'éavluer. Pour
 
 
 
-### Methodes de détection d'*outliers*
-Certains modèles peuvent présenter des métriques assez mauvaises à cause de certaines valeurs abérantes qui induisent le modèle en erreur. Pour détecter ces *"outliers"*, il existe plusieurs méthodes:
-
-
-1. **Boîte à Moustaches (*Boxplot*)**: Un boxplot visualise la distribution des données et identifie les outliers comme des points situés en dehors des moustaches ($1,5$ fois l'intervalle interquartile). Cela permet d'identifier **visuellement** les outliers.
-
-```python
-import matplotlib.pyplot as plt
-
-plt.boxplot(data)
-plt.title('Boxplot des données')
-plt.show()
-```
-
-
-2. **Distance de Cook**: La distance de Cook mesure l'influence d'un point de données sur les coefficients du modèle de régression. Elle évalue l'impact d'une observation sur les valeurs ajustées: Un point avec une distance de Cook supérieure à $1$ ou à $\frac{4}{n}$, où $n$ est le nombre d'observations, peut être considéré comme influent.   
-
-La distance de cook peut se calculer manuellement ou via statsmodels:
-  
-```python
-import statsmodels.api as sm
-
-model = sm.OLS(y, X).fit()
-influence = model.get_influence()
-cooks_d = influence.cooks_distance
-```
-
-
-3. **Résidus Studentisés**: Les résidus studentisés sont des résidus standardisés qui tiennent compte de la variance des résidus, permettant d'identifier les observations atypiques: Des résidus studentisés supérieurs à $3$ ou inférieurs à $-3$ indiquent des points qui s'écartent de la tendance générale.
-
-```python
-studentized_residuals = influence.resid_studentized
-```
-
-
-Il est possible également de faire des tests statistiques.
-
-
-<br>
 <br>
 <br>
 
@@ -433,6 +394,167 @@ plt.show()
 
 <br>
 <br>
+
+
+
+## Boosting
+### AdaBoost
+AdaBoost (pour Adaptive Boosting) peut être utilisé pour résoudre des problèmes de régression via une variante appelée **AdaBoost.R2**. L'idée reste de combiner plusieurs modèles faibles (comme des arbres de décision peu profonds) pour créer un modèle puissant, mais cette fois en minimisant une erreur continue, adaptée aux valeurs de sortie réelles.
+
+```python
+from sklearn.ensemble import AdaBoostRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+# Division des données en ensembles d'entraînement et de test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Création du modèle AdaBoost pour la régression
+boosted_regressor = AdaBoostRegressor(
+    base_estimator=DecisionTreeRegressor(max_depth=3),  # Modèle faible
+    n_estimators=100,                                  # Nombre d'estimateurs faibles
+    random_state=42
+)
+
+# Entraînement du modèle
+boosted_regressor.fit(X_train, y_train)
+
+# Évaluation du modèle
+y_pred = boosted_regressor.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error on Test Data: {mse}")
+```
+
+*<u>Remarque</u>: Le paramètre **`n_estimators`** fait référence au **nombre d'estimateurs faibles** que l'algorithme AdaBoost va entraîner dans le cadre de la procédure de boosting.*  
+
+<br>
+
+### Gradient Boosting
+Le **Gradient Boosting** est une méthode particulièrement adaptée pour la régression. Il combine plusieurs modèles faibles (souvent des arbres de décision) pour minimiser une fonction de perte, comme l'**erreur quadratique moyenne**. L'algorithme affine progressivement ses prédictions en corrigeant les erreurs résiduelles à chaque étape.
+
+```python
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+# Division des données en ensembles d'entraînement et de test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Création du modèle Gradient Boosting pour la régression
+gbr = GradientBoostingRegressor(
+    n_estimators=100,   # Nombre d'arbres
+    learning_rate=0.1,  # Taux d'apprentissage
+    max_depth=3,        # Profondeur des arbres
+    random_state=42
+)
+
+# Entraînement du modèle
+gbr.fit(X_train, y_train)
+
+# Évaluation du modèle
+y_pred = gbr.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error on Test Data: {mse}")
+```
+
+
+#### **Pourquoi le Boosting fonctionne bien en régression ?**
+1. **Modélisation des résidus**: Chaque modèle faible est entraîné pour prédire les erreurs résiduelles du modèle précédent, ce qui améliore progressivement les prédictions.
+2. **Flexibilité**: Le Gradient Boosting peut utiliser différentes fonctions de perte (erreur quadratique, quantiles, etc.), adaptées à divers types de problèmes.
+3. **Robustesse**: Grâce à l'ajout progressif de modèles, le Boosting est résistant au surapprentissage lorsqu'il est correctement régularisé (via des hyperparamètres comme le `learning_rate`).
+
+
+
+<br>
+
+
+### **XGBoost**
+**XGBoost** (Extreme Gradient Boosting) est une implémentation avancée de l'algorithme de **Gradient Boosting**. Il est conçu pour être rapide, efficace et hautement performant.
+
+
+#### **Avantages de XGBoost:**
+1. **Précision élevée** grâce à son approche basée sur le Gradient Boosting.
+2. **Capacité à gérer des données volumineuses**.
+3. **Régularisation intégrée** pour éviter le surapprentissage.
+4. **Prise en charge de diverses fonctions de perte** adaptées aux problèmes de régression.
+
+
+```python
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Chargement des données
+X, y = data.data, data.target
+
+# Division des données en ensembles d'entraînement et de test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Création de la structure DMatrix pour XGBoost
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dtest = xgb.DMatrix(X_test, label=y_test)
+
+# Définition des hyperparamètres pour un problème de régression
+params = {
+    'objective': 'reg:squarederror',  # Fonction de perte pour la régression (erreur quadratique)
+    'max_depth': 6,                  # Profondeur maximale des arbres
+    'eta': 0.1,                      # Taux d'apprentissage
+    'eval_metric': 'rmse',           # Métrique à optimiser: Root Mean Squared Error
+    'seed': 42                       # Pour la reproductibilité
+}
+
+# Entraînement du modèle
+evallist = [(dtrain, 'train'), (dtest, 'eval')]
+model = xgb.train(params, dtrain, num_boost_round=100, evals=evallist, early_stopping_rounds=10)
+
+# Prédictions sur les données de test
+y_pred = model.predict(dtest)
+
+# Évaluation du modèle
+rmse = mean_squared_error(y_test, y_pred, squared=False)
+r2 = r2_score(y_test, y_pred)
+
+print(f"RMSE: {rmse:.2f}")
+print(f"R2 Score: {r2:.2f}")
+```
+<br>
+
+#### **Affichage des performances du modèle:**
+
+```python
+import matplotlib.pyplot as plt
+
+# Comparaison des prédictions et des vraies valeurs
+plt.figure(figsize=(8, 6))
+plt.scatter(y_test, y_pred, alpha=0.5)
+plt.plot([0, 5], [0, 5], color='red', linestyle='--')  # Ligne parfaite y = x
+plt.xlabel("Valeurs Réelles")
+plt.ylabel("Prédictions")
+plt.title("Comparaison Réelles vs Prédictions")
+plt.show()
+```
+
+---
+
+#### **Tuning des hyperparamètres pour la régression:**
+Voici les principaux paramètres à ajuster:
+- **`max_depth`**: Plus la profondeur est grande, plus le modèle est complexe.
+- **`eta` (learning rate)**: Diminue les mises à jour à chaque étape.
+- **`gamma`**: Contrôle la réduction du gain pour diviser un noeud.
+- **`subsample`**: Fraction des données utilisées pour chaque arbre.
+- **`colsample_bytree`**: Fraction des features utilisées pour chaque arbre.
+- **`n_estimators`**: Nombre d'arbres à générer.
+
+Il est possible d'utiliser **GridSearchCV** ou **Optuna** pour optimiser ces paramètres.
+
+(cf [fine-tuning](../fine-tuning.md))
+
+
+
+<br>
+
+
 <br>
 <br>
 
