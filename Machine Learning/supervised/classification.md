@@ -244,6 +244,41 @@ print(f"Testing score: {boosted_forest.score(X_test, y_test)}")
 
 
 ### Gradient Boost
+Le **Gradient Boosting** est une technique d'apprentissage supervisé utilisée pour construire des modèles prédictifs en combinant plusieurs modèles faibles (souvent des arbres de décision). Elle repose sur l'idée de corriger, à chaque étape, les erreurs résiduelles du modèle précédent. Ces corrections s'appuient sur le gradient de la fonction de perte, qui indique la direction dans laquelle améliorer le modèle. Le Gradient Boosting peut utiliser n'importe quelle fonction de perte différentiable, comme l'erreur quadratique (pour la régression) ou l'entropie croisée (pour la classification). Au fil des itérations, le modèle devient de plus en plus précis.:
+
+
+- On cherche une fonction $\hat{f}$ dans un espace de fonctions $\mathcal{H}$ qui minimise une fonction de perte $L(f(x), y)$. Cette fonction de perte mesure à quel point notre modèle $f$ prédit correctement $y$ à partir de $x$.
+- Formulé mathématiquement:
+  $\hat{f} = \arg\min_{f \in \mathcal{H}} \mathbb{E}_{x, y} \left[ L(f(x), y) \right]$
+- $\mathbb{E}_{x, y}$ représente l'espérance par rapport à la distribution des données $(x, y)$, ce qui revient à minimiser l'erreur moyenne sur les données.
+
+<br>
+
+#### **1. Approche par étapes (itérative)**
+- Il n'est pas possible de trouver $\hat{f}$ directement, car l'espace des fonctions $\mathcal{H}$ est très vaste et la solution analytique est souvent impossible.
+- L'idée est de construire $\hat{f}$ progressivement, par étapes, en ajoutant petit à petit des "corrections" à une fonction initiale $f_0$. 
+- À l'étape $k$, le modèle est:
+  $f_k = f_{k-1} + \alpha_k h_k$,
+  où:
+  - $f_{k-1}$ est le modèle courant.
+  - $h_k$ est une fonction "correction" qui doit réduire l'erreur.
+  - $\alpha_k$ est un facteur d'échelle trouvé par optimisation.
+
+<br>
+
+#### **2. Direction de la correction**
+- La fonction $h_k$ est choisie pour **pointer dans la direction qui réduit le plus rapidement la perte**. Cela revient à suivre le **gradient de la perte** par rapport au modèle $f$:   
+$h_k = \mathbb{E}_{x, y} \left[ \nabla_f L(f_{k-1}(x), y) \right]$
+- Intuitivement, $h_k$ "montre" la direction dans laquelle on doit ajuster le modèle $f_{k-1}$ pour réduire l'erreur.
+
+<br>
+
+#### **3. Rôle de $ \alpha_k $**
+- Une fois $h_k$ trouvé, on doit déterminer combien de cette correction ajouter. C'est fait via une recherche linéaire:
+  $\alpha_k = \arg\min_\alpha \mathbb{E}_{x, y} \left[ L(f_{k-1}(x) + \alpha h_k(x), y) \right]$
+- Cela garantit qu'on ajoute $h_k$ avec la bonne "intensité" pour minimiser la perte.
+
+<br>
 
 ```python
 from sklearn.ensemble import GradientBoostingClassifier
@@ -264,4 +299,96 @@ plot_decision_boundary(gtb, X_train,  y_train)
 # Affichage des métriques
 print(f"Training score: {gtb.score(X_train, y_train)}")
 print(f"Testing score: {gtb.score(X_test, y_test)}")
+```
+
+<br>
+
+#### **Applications:**
+- **XGBoost**, **LightGBM**, et **CatBoost** sont des implémentations très performantes du Gradient Boosting. Elles sont largement utilisées pour des problèmes de régression, de classification et de ranking.
+
+
+
+<br>
+
+### XGBoost
+**XGBoost** (Extreme Gradient Boosting) est une implémentation avancée de l'algorithme de **Gradient Boosting**. Il est conçu pour être rapide, efficace et hautement performant.
+
+#### **Avantages de XGBoost:**
+1. **Optimisation du calcul**: Utilise la parallélisation et des techniques comme la régularisation.
+2. **Flexibilité**: Permet de travailler avec différentes fonctions de perte (log-loss, erreur quadratique, etc.).
+3. **Gestion des données manquantes**: Prend en charge automatiquement les données manquantes.
+4. **Régularisation intégrée**: Inclut $\mathcal{L}_1$ et $\mathcal{L}_2$ pour éviter le surapprentissage.
+5. **Support pour les grandes données**: Efficace avec des ensembles de données volumineux.
+
+---
+
+Lorsqu'il est appliqué à un problème de classification, XGBoost utilise une **fonction de perte logarithmique** pour évaluer les prédictions:
+
+```python
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+# Chargement des données
+X, y = data.data, data.target
+
+# Division des données en ensembles d'entraînement et de test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Création de la structure DMatrix pour XGBoost
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dtest = xgb.DMatrix(X_test, label=y_test)
+
+# Définition des hyperparamètres pour un problème de classification binaire
+params = {
+    'objective': 'binary:logistic',  # Fonction de perte pour la classification binaire
+    'max_depth': 4,                 # Profondeur maximale des arbres
+    'eta': 0.1,                     # Taux d'apprentissage
+    'eval_metric': 'logloss',       # Métrique à optimiser
+    'seed': 42                      # Pour la reproductibilité
+}
+
+# Entraînement du modèle
+evallist = [(dtrain, 'train'), (dtest, 'eval')]
+model = xgb.train(params, dtrain, num_boost_round=100, evals=evallist, early_stopping_rounds=10)
+
+# Prédictions sur les données de test
+y_pred_proba = model.predict(dtest)
+y_pred = (y_pred_proba > 0.5).astype(int)  # Conversion des probabilités en classes
+
+# Évaluation du modèle
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+print("\nClassification Report:\n", classification_report(y_test, y_pred))
+```
+
+
+#### **Paramètres importants:**
+   - **`objective`**: Spécifie la tâche à effectuer. Ici, c'est une classification binaire (`binary:logistic`).
+   - **`max_depth`**: Contrôle la complexité des arbres (évite le surapprentissage).
+   - **`eta`**: Le taux d'apprentissage ($\eta$) régule la contribution de chaque arbre.
+   - **`eval_metric`**: La métrique à optimiser. Pour la classification, c'est souvent la `logloss` ou l'`error`.
+
+3. **`early_stopping_rounds`**:
+   - Stoppe l'entraînement si la performance ne s'améliore plus après un certain nombre de rounds.
+
+
+#### **Tuning des hyperparamètres**
+Pour améliorer les performances, il est possible d'optimiser les hyperparamètres de XGBoost, comme:
+- **`n_estimators`**: Nombre d'arbres.
+- **`learning_rate`** (alias `eta`): Réduit le taux d'apprentissage.
+- **`subsample`**: Fraction des données utilisées pour chaque arbre (réduction de la variance).
+- **`colsample_bytree`**: Fraction des features utilisées pour chaque arbre.
+
+Il est possible d'utiliser **GridSearchCV** ou **Optuna** pour optimiser ces paramètres.
+
+---
+
+#### **Affichage des arbres de décision**
+XGBoost permet également de visualiser les arbres générés:
+
+```python
+import matplotlib.pyplot as plt
+xgb.plot_tree(model, num_trees=0)  # Visualiser le premier arbre
+plt.show()
 ```
