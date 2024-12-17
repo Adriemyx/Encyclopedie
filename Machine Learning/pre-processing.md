@@ -27,6 +27,134 @@ plt.colorbar(scatter, ticks=[0, 1, 2], label='Classe')
 plt.grid()
 plt.show()
 ```
+<br>
+
+Dans le cas où il n'y a pas d'objectifs de dimension:
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(df)
+
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+df_pca = pd.DataFrame(X_pca, columns=['X1', 'X2'])
+
+print(f"Variance expliquée par la première composante : {pca.explained_variance_ratio_[0]:.2f}")
+print(f"Variance expliquée par la deuxième composante : {pca.explained_variance_ratio_[1]:.2f}")
+
+plt.figure(figsize=(22, 8))
+plt.scatter(df_pca['X1'], df_pca['X2'])
+plt.xlabel('Composante principale 1')
+plt.ylabel('Composante principale 2')
+plt.title('Projection des paramètres sur les deux premières composantes principales')
+plt.show()
+```
+
+<br>
+
+### t-SNE
+
+Le **t-SNE** est une méthode d’apprentissage non supervisée utilisée principalement pour la **réduction de dimension** et la **visualisation de données**. Il est particulièrement utile pour explorer des données à haute dimension en les projetant dans un espace de **2 ou 3 dimensions** tout en préservant autant que possible les relations locales entre les points.
+
+Le t-SNE réduit la dimensionnalité en modélisant les **relations de proximité locale** entre les points.
+
+1. **Étape 1 : Calcul des probabilités en haute dimension**
+   - Pour chaque point, t-SNE calcule une probabilité conditionnelle $P_{j|i}$ qui représente la similarité entre deux points $x_i$ et $x_j$ en utilisant une distribution de Gauss centrée sur $x_i$.  
+     $$P_{j|i} = \frac{\exp(-\|x_i - x_j\|^2 / 2\sigma_i^2)}{\sum_{k \neq i} \exp(-\|x_i - x_k\|^2 / 2\sigma_i^2)}$$
+
+2. **Étape 2 : Calcul des probabilités en basse dimension**
+   - Dans l'espace projeté (2D ou 3D), t-SNE calcule une distribution $q_{ij}$ pour mesurer la similarité entre deux points projetés $y_i$ et $y_j$ :
+     $$q_{ij} = \frac{(1 + \|y_i - y_j\|^2)^{-1}}{\sum_{k \neq l} (1 + \|y_k - y_l\|^2)^{-1}}$$
+     Ici, une distribution de Student t est utilisée pour capturer les relations locales et globales.
+
+3. **Étape 3 : Alignement des distributions**
+   - t-SNE minimise la divergence de Kullback-Leibler (KL) entre les distributions en haute dimension $P$ et en basse dimension $Q$. L’objectif est de conserver les relations locales :
+     $$C = \sum_{i} \sum_{j} P_{ij} \log\left(\frac{P_{ij}}{Q_{ij}}\right)$$
+
+
+
+---
+
+#### **Hyperparamètres importants**
+1. **Perplexity** : Contrôle le nombre de voisins à prendre en compte pour calculer les relations locales.  
+   Valeurs courantes : 5 à 50.
+2. **Learning Rate** : La vitesse d’apprentissage, qui peut influencer la stabilité de la convergence.  
+   Valeurs courantes : 10 à 1000.
+3. **n_iter** : Nombre d’itérations pour optimiser la projection.
+4. **metric** : Mesure de distance (euclidienne par défaut).
+
+
+---
+
+
+#### **Avantages :**
+- Excellente visualisation de clusters dans les données.
+- Conserve les relations locales et révèle des structures cachées.
+- Adapté à de nombreux types de données (images, textes, etc.).
+
+#### **Limites :**
+- **Coût computationnel élevé** : Ne s’adapte pas bien aux très grands jeux de données.
+- Résultat dépend de plusieurs hyperparamètres, notamment :
+  - **`perplexity`** : Contrôle le compromis entre la préservation locale et globale.
+  - **`learning_rate`** : Influence la vitesse d’apprentissage.
+- Ne fonctionne que pour la visualisation (2D ou 3D).
+
+
+
+<br>
+
+#### **Exemple avec le jeu de données MNIST**
+```python
+from sklearn.datasets import fetch_openml
+from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+
+# Charger le jeu de données MNIST
+mnist = fetch_openml('mnist_784', version=1)
+X, y = mnist.data, mnist.target
+
+# Normaliser les données
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Réduire la taille pour accélérer le traitement
+X_subset = X_scaled[:2000]
+y_subset = y[:2000]
+
+# Appliquer t-SNE
+tsne = TSNE(n_components=2, perplexity=40, random_state=42)
+X_embedded = tsne.fit_transform(X_subset)
+
+# Visualisation
+plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y_subset.astype(int), cmap='tab10')
+plt.colorbar()
+plt.title("t-SNE sur MNIST")
+plt.show()
+```
+
+<br>
+
+#### **Comparaison avec l'ACP**
+| Méthode               | Avantages                          | Inconvénients                     |
+|------------------------|------------------------------------|-----------------------------------|
+| **t-SNE**             | Préserve les relations locales     | Lent, dépend des hyperparamètres |
+| **PCA**               | Rapide, simple                    | Ne conserve pas toujours les relations locales |
+
+---
+
+#### **Conseils pour l'utilisation:**
+- **Normalisation** : Toujours normaliser les données avant d’appliquer t-SNE.
+- **Réduction préalable** : Si les données sont très volumineuses, utilisez une réduction préliminaire (comme PCA) pour accélérer.
+- **Paramètres** :
+  - Expérimentez avec **perplexity** (généralement entre 5 et 50).
+  - Utilisez un nombre d’itérations suffisant (par défaut : 1000 ou plus).
+
 
 
 
