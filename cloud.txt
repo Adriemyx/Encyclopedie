@@ -1,7 +1,0 @@
-lister les éléments d'un bucket: gsutil ls gs://[BUCKET_NAME]/
-récupérer les données sur le cloud: gcloud compute scp --recurse instance-20241015-123928:data /workspaces/isae-cloud-computing-codespace
-
-
-récupérer du bucket: gcloud storage cp gs://data_bck/kitten.png /workspaces/isae-cloud-computing-codespace/kitten.png
-
-copier sur le bucket: gcloud storage cp /workspaces/isae-cloud-computing-codespace/kitten.png  gs://data_bck
