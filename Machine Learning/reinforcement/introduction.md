@@ -3,7 +3,9 @@
 L'apprentissage par enforcement est l'apprentissage du **controle de système dynamique** $\Sigma$, défini par un état qui change au cours du temps:   
 A partir de l'observation $o$ de l'**état** $s$, une **fonction / politique de controle** $\pi$ va décider d'une commande $u = \pi(o)$ pour changer ou non l'état du système.
 
-<center><img src="img/dynamic.png" style="width: 400px;"></img></center>
+<h3 align='center'>
+    <img src="img/dynamic.png">
+</h3>
 
 <br>
 
