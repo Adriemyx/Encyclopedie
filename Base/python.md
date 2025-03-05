@@ -120,6 +120,11 @@ Utiliser cette commande pour s'assurer de disposer de la dernière version de Co
 ### 5. **Installer des bibliothèques**  
    Maintenant que l'environnement est prêt et activé, il faut installer les bibliothèques nécessaire:
    ```bash
+   conda install -c conda-forge ${bib}
+   ```
+
+   Il est aussi possible de le faire avec `pip`:
+   ```bash
    pip install ${bib}
    ```
 
