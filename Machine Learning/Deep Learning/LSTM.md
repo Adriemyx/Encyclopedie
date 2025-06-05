@@ -186,3 +186,85 @@ Pour prédire ou classer "**glissé**", savoir que "**peau de banane**" vient **
 
 * Tu fais de la **prédiction temps réel / séquentielle** (ex: prédire le futur en temps réel, traitement de flux, génération en ligne, etc.).
 * Tu ne peux **pas utiliser d’info du futur** (c'est interdit dans le cadre métier, ex: finance en ligne, robotique, etc.).
+
+
+
+Oui, et c’est un sujet passionnant ! 🎯 L’interprétabilité des modèles LSTM (et plus généralement des modèles séquentiels profonds) est **un défi**, mais il existe plusieurs **outils et méthodes** pour **comprendre ce que le modèle a appris** ou **pourquoi il prédit ce qu’il prédit**.
+
+---
+
+## 🔍 Outils & méthodes d’interprétabilité pour les LSTM
+
+### 1. 🧠 **Attention (self-attention ou mécanisme externe)**
+
+* Ajoute un **poids à chaque pas de temps** de la séquence.
+* Tu peux **visualiser les poids d’attention** pour savoir **quels moments du signal ont influencé la prédiction**.
+
+> **Idéal** pour les tâches où certains instants clés du signal portent plus d’info que d’autres (ex : anomalies, pics, motifs localisés).
+
+#### 📦 Outils : implémenté manuellement, ou via modules comme `torch.nn.MultiheadAttention`
+
+---
+
+### 2. 📊 **LIME / SHAP (adaptés aux séquences)**
+
+* Techniques **agnostiques** au modèle (boîte noire) qui mesurent l’effet de perturbations locales.
+* Te disent **quels éléments de la séquence ont le plus pesé** dans la décision.
+
+> ⚠️ Peut être coûteux en temps de calcul, et nécessite parfois d'adapter la granularité temporelle (par ex. segmenter la séquence en blocs).
+
+#### 📦 Outils :
+
+* `LIME`: [`lime.lime_tabular`](https://github.com/marcotcr/lime)
+* `SHAP`: [`DeepExplainer` ou `GradientExplainer`](https://github.com/slundberg/shap)
+
+---
+
+### 3. 🔎 **Gradient-based methods (saliency, integrated gradients, etc.)**
+
+* Calculent le **gradient de la sortie par rapport à l’entrée** : "si je bouge ce point du signal, est-ce que la sortie change beaucoup ?"
+* Permettent de **visualiser les zones sensibles du signal**.
+
+> Très utilisé en NLP et vision, **transposable aux séries temporelles**.
+
+#### 📦 Outils :
+
+* `captum` (lib PyTorch pour l’interprétabilité)
+  → [https://github.com/pytorch/captum](https://github.com/pytorch/captum)
+  → propose : saliency maps, integrated gradients, DeepLIFT, etc.
+
+---
+
+### 4. 🛠️ **Hidden state analysis**
+
+* Inspecte manuellement les `hₜ` ou `cₜ` au fil du temps.
+* Peut être visualisé comme un "électroencéphalogramme" du modèle.
+* Si tu observes des pics ou des activations fortes à certains instants, cela **révèle que le modèle "réagit" à certaines zones du signal.**
+
+#### 👉 Pratique :
+
+```python
+out, (hn, cn) = model.lstm(x)
+# out: (batch, seq_len, hidden_size)
+plt.plot(out[0].detach().cpu())  # Affiche l'évolution des activations
+```
+
+---
+
+### 5. 📚 **Feature occlusion / masking**
+
+* Masquer des morceaux du signal (par ex. remplacer par du bruit ou des zéros) et observer la variation de la prédiction.
+* Cela montre **quelles zones sont critiques** pour la décision.
+
+---
+
+## 🧠 En résumé : quelle méthode choisir ?
+
+| Objectif                                        | Méthode                    | Facilité            | Interprétation                |
+| ----------------------------------------------- | -------------------------- | ------------------- | ----------------------------- |
+| Voir **quand** le modèle s'active               | Attention                  | ✅ Facile à intégrer | 🌟 Très visuel                |
+| Voir **quels éléments** impactent la prédiction | LIME / SHAP                | ⚠️ Plus lourd       | 🌟 Explicite                  |
+| Voir **où le gradient est fort**                | Saliency / IG (Captum)     | ✅ Moyen             | 🔍 Précis mais parfois bruité |
+| Voir **ce que le modèle "ressent"**             | Analyse des états internes | ✅ Facile            | 🔧 Diagnostic                 |
+| Tester l’impact d’un bloc du signal             | Masquage / occlusion       | ✅ Simple            | 🧪 Empirique                  |
+
