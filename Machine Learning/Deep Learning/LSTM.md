@@ -50,6 +50,41 @@ iₜ = sigmoid(W_i · [hₜ₋₁, xₜ] + b_i)
 * `iₜ` dit **quelles dimensions sont mises à jour**
 * `ĉₜ` est la **nouvelle info candidate**
 
+
+#### 🔍 Ce que ça veut dire concrètement :
+
+`iₜ` est un **vecteur de la même taille que `ĉₜ`** (la nouvelle "info candidate" à ajouter à la mémoire). Chacune de ses composantes (entre 0 et 1 grâce à la sigmoïde) agit comme un **interrupteur doux** :
+
+* Si `iₜ[j]` est proche de **1**, cela veut dire :
+  👉 **“Oui, on veut mettre à jour la dimension `j` de la mémoire avec `ĉₜ[j]`.”**
+
+* Si `iₜ[j]` est proche de **0**, cela veut dire :
+  👉 **“Non, on ne touche pas à cette dimension `j` de la mémoire.”**
+
+
+
+#### 🧠 Exemple simple :
+
+Imaginons que `ĉₜ = [0.4, -0.7, 0.2]` (la nouvelle info)
+et que `iₜ = [1.0, 0.0, 0.5]` (le filtre "quoi ajouter").
+
+Alors `iₜ * ĉₜ = [0.4, 0.0, 0.1]`
+
+➡️ La **1ère dimension** est complètement ajoutée
+➡️ La **2ème dimension** est ignorée
+➡️ La **3ème dimension** est partiellement prise en compte
+
+
+
+#### 📌 En résumé :
+
+Quand on dit que `iₜ` "dit quelles dimensions sont mises à jour", ça signifie :
+
+> Chaque élément de `iₜ` décide **dans quelle mesure** on ajoute la nouvelle information `ĉₜ` **dans chaque case** de la mémoire `cₜ`.
+
+Tu peux imaginer que la mémoire a plein de petits tiroirs (une par dimension), et `iₜ` choisit **quels tiroirs ouvrir plus ou moins grand** pour y glisser la nouvelle info.
+
+
 ---
 
 ### 🧠 **Mise à jour de la mémoire** `cₜ`
