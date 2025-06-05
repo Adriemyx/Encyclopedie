@@ -150,3 +150,39 @@ lstm = nn.LSTM(input_size=2, hidden_size=64, num_layers=2, batch_first=True)
 ```
 
 Mais **comprendre ce qu’il se passe dans chaque cellule t’aide à mieux configurer le modèle**, à choisir le bon pooling, ou à interpréter les erreurs.
+
+---
+
+## 🚀 À quoi sert la bidirectionnalité ?
+
+Une **LSTM bidirectionnelle** lit la séquence **dans les deux sens** :
+
+* une LSTM “avant” lit de `t=0` à `t=T`
+* une LSTM “arrière” lit de `t=T` à `t=0`
+
+Elle capte donc :
+
+* le **contexte passé** (`←`) comme une LSTM normale
+* **et aussi le futur** (`→`) dans la séquence
+
+### 👉 Exemple :
+
+Dans une phrase :
+
+> “Il a **glissé** sur une **peau de banane**.”
+
+Pour prédire ou classer "**glissé**", savoir que "**peau de banane**" vient **après** peut aider énormément — mais une LSTM classique ne le sait pas encore. Une bidirectionnelle, oui.
+
+---
+
+## 📊 Est-ce que c’est toujours mieux ?
+
+### ✅ **Oui**, si :
+
+* Tu travailles sur une tâche où **tout le contexte est disponible en avance** (ex: classification de séquence, compréhension globale, NLP, séries temporelles **non causales**).
+* Tu veux **plus de contexte global** pour prendre une décision à la fin (ex: sentiment global, détection d’anomalies sur fenêtre glissante...).
+
+### ❌ **Non**, si :
+
+* Tu fais de la **prédiction temps réel / séquentielle** (ex: prédire le futur en temps réel, traitement de flux, génération en ligne, etc.).
+* Tu ne peux **pas utiliser d’info du futur** (c'est interdit dans le cadre métier, ex: finance en ligne, robotique, etc.).
