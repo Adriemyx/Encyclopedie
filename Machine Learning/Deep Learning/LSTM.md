@@ -378,3 +378,65 @@ plt.plot(out[0].detach().cpu())  # Affiche l'évolution des activations
 | Voir **ce que le modèle "ressent"**             | Analyse des états internes | ✅ Facile            | 🔧 Diagnostic                 |
 | Tester l’impact d’un bloc du signal             | Masquage / occlusion       | ✅ Simple            | 🧪 Empirique                  |
 
+
+
+<br>
+
+## 🧱 **Architecture LSTM pour régression**
+
+```python
+import torch
+import torch.nn as nn
+
+class DminRegressorLSTM(nn.Module):
+    def __init__(self, input_size=1, hidden_size=64, num_layers=2, bidirectional=True):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bidirectional = bidirectional
+        
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=bidirectional
+        )
+        
+        # Taille de sortie après LSTM
+        lstm_output_size = hidden_size * (2 if bidirectional else 1)
+        
+        # Réduction des features pour prédiction
+        self.regressor = nn.Sequential(
+            nn.Linear(lstm_output_size, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid()       # Pour que la sortie soit dans [0, 1]
+        )
+
+    def forward(self, x):
+        # x shape: (batch, seq_len, 1)
+        out, _ = self.lstm(x)  # out shape: (batch, seq_len, hidden*2)
+        out = out.mean(dim=1)  # Moyenne temporelle : (batch, hidden*2)
+        out = self.regressor(out)  # (batch, 1)
+        return out
+```
+
+
+*Remarque:* On fait souvent la **moyenne temporelle** (`out.mean(dim=1)`) des sorties LSTM car c’est une manière simple, efficace et **neutre** d’agréger **l'information séquentielle** en une représentation **fixe** pour des tâches comme la **classification** ou la **régression**. Voici pourquoi 👇
+
+#### 1. **On veut une sortie fixe par séquence**
+
+* Ton LSTM produit une **sortie à chaque pas de temps** → `(batch, seq_len, hidden_size)`
+* Mais pour une tâche de **régression**, on veut **une seule sortie par signal** → `(batch, 1)`
+* Moyenne = façon simple de condenser la séquence en un seul vecteur
+
+#### 2. **Ne fait pas d’hypothèse sur où est l’info**
+
+* Contrairement à `out[:, -1, :]` (dernière sortie), la moyenne **utilise toute la séquence**
+* Si l’info utile est **n'importe où** dans le signal, elle sera prise en compte
+
+#### 3. **Moins sensible à la position**
+
+* Utile si la **cible** varie beaucoup dans le signal
+* Cela aide à généraliser en l’absence d’attention explicite
