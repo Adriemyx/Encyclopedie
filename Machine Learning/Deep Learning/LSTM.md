@@ -204,6 +204,116 @@ Oui, et c’est un sujet passionnant ! 🎯 L’interprétabilité des modèles 
 
 #### 📦 Outils : implémenté manuellement, ou via modules comme `torch.nn.MultiheadAttention`
 
+
+#### 🎯 **But de l'attention**
+
+> Permettre au modèle de **se concentrer** sur les parties **importantes** d’une séquence d’entrée.
+> Plutôt que de traiter chaque élément de la séquence également (comme une moyenne), le modèle **apprend à pondérer chaque pas de temps** selon sa pertinence pour la tâche (ex : classification).
+
+#### ⚙️ **Principe de fonctionnement**
+
+1. **Tu obtiens une séquence de vecteurs** (ex : les `hₜ` de chaque pas de temps du LSTM)
+2. Tu apprends un **score d’importance** pour chaque `hₜ`
+3. Tu appliques un **softmax** pour normaliser en poids `αₜ`
+4. Tu fais une **somme pondérée** de ces `hₜ` ➝ c’est ton **vecteur de contexte**
+
+
+#### 🔧 Version 1 — Attention simple (maison)
+
+##### ✅ Simple, interprétable, rapide à entraîner
+
+```python
+import torch
+import torch.nn as nn
+
+class LSTMWithSimpleAttention(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, num_layers=1, bidirectional=True):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bidirectional = bidirectional
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers,
+                            batch_first=True, bidirectional=bidirectional)
+        
+        self.attn = nn.Linear(hidden_size * 2 if bidirectional else hidden_size, 1)
+        self.fc = nn.Linear(hidden_size * 2 if bidirectional else hidden_size, output_size)
+
+    def forward(self, x):
+        # x: (batch, seq_len, input_size)
+        lstm_out, _ = self.lstm(x)  # (batch, seq_len, hidden*2)
+        
+        # Attention scores
+        attn_scores = self.attn(lstm_out)  # (batch, seq_len, 1)
+        attn_weights = torch.softmax(attn_scores, dim=1)  # (batch, seq_len, 1)
+
+        # Context vector
+        context = torch.sum(attn_weights * lstm_out, dim=1)  # (batch, hidden*2)
+
+        out = self.fc(context)  # (batch, output_size)
+        return out, attn_weights  # on peut visualiser où le modèle regarde
+```
+
+#### 🤖 Version 2 — Avec `torch.nn.MultiheadAttention`
+
+##### ✅ Plus puissant, multi-perspective
+
+##### ⚠️ Plus complexe, mais utile sur séquences longues ou motifs imbriqués
+
+```python
+import torch
+import torch.nn as nn
+
+class LSTMWithMultiheadAttention(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, num_layers=1, num_heads=4):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers,
+                            batch_first=True, bidirectional=True)
+
+        self.attn = nn.MultiheadAttention(embed_dim=hidden_size * 2, num_heads=num_heads, batch_first=False)
+        self.fc = nn.Linear(hidden_size * 2, output_size)
+
+    def forward(self, x):
+        # x: (batch, seq_len, input_size)
+        batch_size = x.size(0)
+        lstm_out, _ = self.lstm(x)  # (batch, seq_len, hidden*2)
+
+        # Convert to (seq_len, batch, embed_dim) for MultiheadAttention
+        lstm_out = lstm_out.permute(1, 0, 2)
+
+        # Self-attention (query = key = value)
+        attn_output, attn_weights = self.attn(lstm_out, lstm_out, lstm_out)
+
+        # Back to (batch, seq_len, hidden*2)
+        attn_output = attn_output.permute(1, 0, 2)
+
+        # Pool (mean over time)
+        context = attn_output.mean(dim=1)
+
+        out = self.fc(context)
+        return out, attn_weights  # (attn_weights: [batch*num_heads, seq_len, seq_len])
+```
+
+#### 🆚 Comparaison rapide
+
+| Aspect                        | Attention simple         | MultiheadAttention (`nn`) |
+| ----------------------------- | ------------------------ | ------------------------- |
+| Facilité d’implémentation     | ✅ Très simple            | ⚠️ Doit permuter les dims |
+| Interprétabilité              | ✅ Facile (1 score par t) | ❌ Plus dur (par tête)     |
+| Puissance / Flexibilité       | 🔶 Moyenne               | ✅ Forte                   |
+| Utilisation de plusieurs vues | ❌ Non                    | ✅ Oui (multi-perspective) |
+| Recommandé pour démarrer      | ✅ Oui                    | ❌ À garder pour plus tard |
+
+
+
+
+
+
+
+
+
+
 ---
 
 ### 2. 📊 **LIME / SHAP (adaptés aux séquences)**
